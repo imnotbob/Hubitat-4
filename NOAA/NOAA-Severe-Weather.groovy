@@ -19,7 +19,7 @@
  *			  Donations are always appreciated: https://www.paypal.me/aaronmward
  * ------------------------------------------------------------------------------------------------------------------------------
  *
- * Last Update: 7/26/2020
+ * Last Update: 7/28/2020
  */
 
 static String version() { return "4.0.000" }
@@ -340,8 +340,8 @@ void alertNow(String alertmsg, Boolean repeatCheck){
 	atomicState.alertAnnounced = true
 	Boolean restrictionSwitch = (switchYes && restrictbySwitch != null && restrictbySwitch.currentState("switch").value == "on")
 	Boolean restrictionMode = (modesYes && modes != null && modes.contains(location.mode))
-	Boolean overrideRestSeverity = (modeSeverityYes && modeSeverity != null && modeSeverity.contains(ListofAlertsFLD[0].alertseverity))
-	Boolean overrideRestWeather = (modeWeatherType && WeatherType != null && WeatherType.contains(ListofAlertsFLD[0].alertevent))
+	Boolean overrideRestSeverity = (modeSeverityYes && modeSeverity != null && ListofAlertsFLD && modeSeverity.contains(ListofAlertsFLD[0]?.alertseverity))
+	Boolean overrideRestWeather = (modeWeatherType && WeatherType != null && ListofAlertsFLD && WeatherType.contains(ListofAlertsFLD[0]?.alertevent))
 	if(logEnable) log.debug "Restrictions on?  Modes: ${restrictionMode}, Switch: ${restrictionSwitch}, Severity Override: ${overrideRestSeverity}, Weather Type Override: ${overrideRestWeather}"
 /*
 				input (name: "UsealertSwitch", type: "bool", title: "Use a switch to turn ON with Alert?", required: false, defaultValue: false, submitOnChange: true)
@@ -627,7 +627,7 @@ void runtestAlert() {
 	if(logEnable) log.debug "Initiating a test alert."
 	String msg=buildTestAlert()
 	atomicState.alertAnnounced = false
-	alertNow((String)state.repeatmsg, false)
+	alertNow(msg, false)
 	if(repeatYes){
 		state.repeatmsg=msg
 		state.repeat=false
