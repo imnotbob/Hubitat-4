@@ -91,20 +91,20 @@ def NotificationPage() {
 				if(pushovertts){ input "pushoverdevice", "capability.notification", title: "PushOver Device", required: true, multiple: true}
 
 				// Music Speakers (Sonos, etc)
-				input(name: "musicmode", type: "bool", defaultValue: "false", title: "Use Music Speaker(s) for TTS?", description: "Music Speaker(s)?", submitOnChange: true)
+				input(name: "musicmode", type: "bool", defaultValue: false, title: "Use Music Speaker(s) for TTS?", description: "Music Speaker(s)?", submitOnChange: true)
 				if (musicmode) input "musicspeaker", "capability.musicPlayer", title: "Choose speaker(s)", required: false, multiple: true, submitOnChange: true
 
 				// Speech Speakers
-				input(name: "speechmode", type: "bool", defaultValue: "false", title: "Use Speech Speaker(s) for TTS? (Google, Alexa TTS, etc)", description: "Speech Speaker(s)?", submitOnChange: true)
+				input(name: "speechmode", type: "bool", defaultValue: false, title: "Use Speech Speaker(s) for TTS? (Google, Alexa TTS, etc)", description: "Speech Speaker(s)?", submitOnChange: true)
    				if (speechmode) input "speechspeaker", "capability.speechSynthesis", title: "Choose speaker(s)", required: false, multiple: true, submitOnChange: true
 
 				// Echo Speaks devices
-				input (name: "echoSpeaks2", type: "bool", defaultValue: "false", title: "Use Echo Speaks device(s) for TTS?", description: "Echo Speaks device?", submitOnChange: true)
+				input (name: "echoSpeaks2", type: "bool", defaultValue: false, title: "Use Echo Speaks device(s) for TTS?", description: "Echo Speaks device?", submitOnChange: true)
 					if(echoSpeaks2) input "echospeaker", "capability.musicPlayer", title: "Choose Echo Speaks Device(s)", required: false, multiple: true, submitOnChange: true
 
 				// Master Volume settings
-				input "speakervolume", "number", title: "Notification Volume Level:", description: "0-100%", required: false, defaultValue: "75", submitOnChange: true
-				input "speakervolRestore", "number", title: "Restore Volume Level:", description: "0-100", required: false, defaultValue: "60", submitOnChange: true
+				input "speakervolume", "number", title: "Notification Volume Level:", description: "0-100%", required: false, defaultValue: 75, submitOnChange: true
+				input "speakervolRestore", "number", title: "Restore Volume Level:", description: "0-100", required: false, defaultValue: 60, submitOnChange: true
 
 				// Switch to set when alert active
 				input (name: "UsealertSwitch", type: "bool", title: "Use a switch to turn ON with Alert?", required: false, defaultValue: false, submitOnChange: true)
@@ -129,7 +129,7 @@ def ConfigPage() {
 						"moderate": "Moderate",
 						"severe": "Severe",
 						"extreme": "Extreme"], required: true, multiple: true, defaultValue: "Severe"
-			input name: "whatPoll", type: "enum", title: "Poll Frequency: ", options: ["1": "1 Minute", "5": "5 Minutes", "10": "10 Minutes", "15": "15 Minutes"], required: true, multiple: false, defaultValue: "1 Minute"
+			input name: "whatPoll", type: "enum", title: "Poll Frequency: ", options: ["1": "1 Minute", "5": "5 Minutes", "10": "10 Minutes", "15": "15 Minutes"], required: true, multiple: false, defaultValue: "5"
 			input "repeatYes", "bool", title: "Repeat Alert?", require: false, defaultValue: false, submitOnChange: true
 			if(repeatYes) {
 				input name:"repeatTimes", type: "number", title: "Number of times to repeat the alert?", require: false, defaultValue: 1, submitOnChange:true
@@ -389,7 +389,7 @@ void repeatNow(){
 		}else{
 			state.repeat = true
 			state.rptCount = 0
-			state.rptNum = repeatTimes.toInteger()
+			state.rptNum = repeatTimes!=null ? repeatTimes : 1
 			if(logEnable) log.debug "Starting repeating alerts."
 		}
 	
@@ -720,7 +720,7 @@ void pushNow(String alertmsg, Boolean repeatCheck) {
 		List fullalert = []
 		if(logEnable) log.debug "Sending Pushover message."
 		if(repeatCheck) {
-			if(repeatTimes.toInteger()>1) alertmsg = "[Alert Repeat ${state.rptCount}/${repeatTimes}] " + alertmsg
+			if(repeatTimes>1) alertmsg = "[Alert Repeat ${state.rptCount}/${repeatTimes}] " + alertmsg
 			else alertmsg = "[Alert Repeat] " + alertmsg
 		}
 
@@ -847,19 +847,19 @@ void checkState() {
 	atomicState.testmsg = false
 	if(whatPoll==null) app.updateSetting("whatPoll",[value:"5",type:"enum"])
 	if(logEnable==null) app.updateSetting("logEnable",[value:"false",type:"bool"])
-	if(logMinutes==null) app.updateSetting("logMinutes",[value:"15",type:"number"])
+	if(logMinutes==null) app.updateSetting("logMinutes",[value:15,type:"number"])
 	if(whatAlertSeverity==null) app.updateSetting("whatAlertSeverity",[value:"Severe",type:"enum"])
 	if(alertCustomMsg==null) app.updateSetting("whatCustomMsg",[value:"{alertseverity} Weather Alert for the following counties: {alertarea} {alertdescription} This is the end of this Weather Announcement.",type:"text"])
 
 	Integer t0
 	if(repeatTimes==null){
-		app.updateSetting("repeatTimes",[value:"1",type:"number"])
+		app.updateSetting("repeatTimes",[value:1,type:"number"])
 		t0=1
 	}else t0=repeatTimes.toInteger()
 	state.rptNum = t0
 
 	if(repeatMinutes==null){
-		app.updateSetting("repeatMinutes",[value:"15",type:"number"])
+		app.updateSetting("repeatMinutes",[value:15,type:"number"])
 		t0=15
 	} else t0=repeatMinutes.toInteger()
 	state.frequency = t0
@@ -882,18 +882,21 @@ void initialize() {
 	createChildDevices()
 	state.repeat = false
 	state.repeatmsg = (String)null
-	if(logEnable && logMinutes.toInteger() != 0) {
-		if(logMinutes.toInteger() !=0) log.warn "Debug messages set to automatically disable in ${logMinutes} minute(s)."
-		runIn((logMinutes.toInteger() * 60),logsOff)
-	} else if(logEnable && logMinutes.toInteger() == 0) log.warn "Debug logs set to not automatically disable."
-		else log.info "Debug logs disabled."
+	//if(logEnable && logMinutes.toInteger() != 0) {
+	if(logEnable){
+		Integer myLog=15
+		if(logMinutes!=null)myLog=logMinutes.toInteger()
+		if(myLog!=0){
+			log.warn "Debug messages set to automatically disable in ${myLog} minute(s)."
+			runIn((myLog * 60),logsOff)
+		} else log.warn "Debug logs set to not automatically disable."
+	} else log.info "Debug logs disabled."
 
-	switch(whatPoll.toInteger()) {
+	Integer myPoll=5
+	if(whatPoll!=null)myPoll=whatPoll.toInteger()
+	switch(myPoll) {
 		case 1:
 			runEvery1Minute(main)
-			break
-		case 5:
-			runEvery5Minutes(main)
 			break
 		case 10:
 			runEvery10Minutes(main)
@@ -901,6 +904,9 @@ void initialize() {
 		case 15:
 			runEvery15Minutes(main)
 			break
+		case 5:
+		//	runEvery5Minutes(main)
+		//	break
 		default:
 			runEvery5Minutes(main)
 			break
