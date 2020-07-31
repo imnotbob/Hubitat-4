@@ -19,7 +19,7 @@
  *			  Donations are always appreciated: https://www.paypal.me/aaronmward
  * ------------------------------------------------------------------------------------------------------------------------------
  *
- * Last Update: 7/28/2020
+ * Last Update: 7/29/2020
  */
 
 static String version() { return "4.0.000" }
@@ -86,34 +86,34 @@ def NotificationPage() {
 		section(UIsupport("logo","")) {
 			paragraph UIsupport("header", " Setup Notification Device(s)")
 			paragraph "Select a communication(s) method, notification and restore volume levels, use a switch with advanced settings."
-				// PushOver Devices
-				input "pushovertts", "bool", title: "Use 'Pushover' device(s)?", required: false, defaultValue: false, submitOnChange: true
-				if(pushovertts){ input "pushoverdevice", "capability.notification", title: "PushOver Device", required: true, multiple: true}
+			// PushOver Devices
+			input "pushovertts", "bool", title: "Use 'Pushover' device(s)?", required: false, defaultValue: false, submitOnChange: true
+			if(pushovertts){ input "pushoverdevice", "capability.notification", title: "PushOver Device", required: true, multiple: true}
 
-				// Music Speakers (Sonos, etc)
-				input(name: "musicmode", type: "bool", defaultValue: false, title: "Use Music Speaker(s) for TTS?", description: "Music Speaker(s)?", submitOnChange: true)
-				if (musicmode) input "musicspeaker", "capability.musicPlayer", title: "Choose speaker(s)", required: false, multiple: true, submitOnChange: true
+			// Music Speakers (Sonos, etc)
+			input(name: "musicmode", type: "bool", defaultValue: false, title: "Use Music Speaker(s) for TTS?", description: "Music Speaker(s)?", submitOnChange: true)
+			if (musicmode) input "musicspeaker", "capability.musicPlayer", title: "Choose speaker(s)", required: false, multiple: true, submitOnChange: true
 
-				// Speech Speakers
-				input(name: "speechmode", type: "bool", defaultValue: false, title: "Use Speech Speaker(s) for TTS? (Google, Alexa TTS, etc)", description: "Speech Speaker(s)?", submitOnChange: true)
-   				if (speechmode) input "speechspeaker", "capability.speechSynthesis", title: "Choose speaker(s)", required: false, multiple: true, submitOnChange: true
+			// Speech Speakers
+			input(name: "speechmode", type: "bool", defaultValue: false, title: "Use Speech Speaker(s) for TTS? (Google, Alexa TTS, etc)", description: "Speech Speaker(s)?", submitOnChange: true)
+			if (speechmode) input "speechspeaker", "capability.speechSynthesis", title: "Choose speaker(s)", required: false, multiple: true, submitOnChange: true
 
-				// Echo Speaks devices
-				input (name: "echoSpeaks2", type: "bool", defaultValue: false, title: "Use Echo Speaks device(s) for TTS?", description: "Echo Speaks device?", submitOnChange: true)
-					if(echoSpeaks2) input "echospeaker", "capability.musicPlayer", title: "Choose Echo Speaks Device(s)", required: false, multiple: true, submitOnChange: true
+			// Echo Speaks devices
+			input (name: "echoSpeaks2", type: "bool", defaultValue: false, title: "Use Echo Speaks device(s) for TTS?", description: "Echo Speaks device?", submitOnChange: true)
+			if(echoSpeaks2) input "echospeaker", "capability.musicPlayer", title: "Choose Echo Speaks Device(s)", required: false, multiple: true, submitOnChange: true
 
-				// Master Volume settings
-				input "speakervolume", "number", title: "Notification Volume Level:", description: "0-100%", required: false, defaultValue: 75, submitOnChange: true
-				input "speakervolRestore", "number", title: "Restore Volume Level:", description: "0-100", required: false, defaultValue: 60, submitOnChange: true
+			// Master Volume settings
+			input "speakervolume", "number", title: "Notification Volume Level:", description: "0-100%", required: false, defaultValue: 75, submitOnChange: true
+			input "speakervolRestore", "number", title: "Restore Volume Level:", description: "0-100", required: false, defaultValue: 60, submitOnChange: true
 
-				// Switch to set when alert active
-				input (name: "UsealertSwitch", type: "bool", title: "Use a switch to turn ON with Alert?", required: false, defaultValue: false, submitOnChange: true)
-				if(UsealertSwitch) {
-					input (name: "alertSwitch", type: "capability.switch", title: "Select a switch to turn ON with Alert?", multiple: false, required: false, defaultValue: false, submitOnChange: true)
-					input (name:"alertSwitchOff", type: "bool", title: "Turn off switch when all Alerts expire?", required: false, defaultValue: false, submitOnChange: true)
-					input (name:"alertSwitchWeatherType", type: "bool", title: "Turn off switch if certain weather alert types expire?", required: false, defaultValue: false, submitOnChange: true)
-					if(alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", "enum", title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: state.eventTypes
-				}
+			// Switch to set when alert active
+			input (name: "UsealertSwitch", type: "bool", title: "Use a switch to turn ON with Alert?", required: false, defaultValue: false, submitOnChange: true)
+			if(UsealertSwitch) {
+				input (name: "alertSwitch", type: "capability.switch", title: "Select a switch to turn ON with Alert?", multiple: false, required: false, defaultValue: false, submitOnChange: true)
+				input (name:"alertSwitchOff", type: "bool", title: "Turn off switch when all Alerts expire?", required: false, defaultValue: false, submitOnChange: true)
+				input (name:"alertSwitchWeatherType", type: "bool", title: "Turn off switch if certain weather alert types expire?", required: false, defaultValue: false, submitOnChange: true)
+				if(alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", "enum", title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: state.eventTypes
+			}
 		}
 	}
 }
@@ -125,10 +125,10 @@ def ConfigPage() {
 			paragraph "Configure NOAA to look for specific alert severities, how often to poll for weather information, repeat alerts, use custom coordinates and customize the alert message sent to notification device(s)."
 			input name: "whatAlertSeverity", type: "enum", title: "Weather Severity(s) to gather in poll: ",
 				options: [
-						"minor": "Minor",
-						"moderate": "Moderate",
-						"severe": "Severe",
-						"extreme": "Extreme"], required: true, multiple: true, defaultValue: "Severe"
+					"minor": "Minor",
+					"moderate": "Moderate",
+					"severe": "Severe",
+					"extreme": "Extreme"], required: true, multiple: true, defaultValue: "Severe"
 			input name: "whatPoll", type: "enum", title: "Poll Frequency: ", options: ["1": "1 Minute", "5": "5 Minutes", "10": "10 Minutes", "15": "15 Minutes"], required: true, multiple: false, defaultValue: "5"
 			input "repeatYes", "bool", title: "Repeat Alert?", require: false, defaultValue: false, submitOnChange: true
 			if(repeatYes) {
@@ -168,18 +168,18 @@ def AdvConfigPage() {
 			paragraph "Use with caution as below settings may cause undesired results.  Only select what you would like to refine in your alerts.  Reference <a href='https://www.weather.gov/documentation/services-web-api?prevfmt=application%2Fcap%2Bxml/default/get_alerts#/default/get_alerts' target='_blank'>Weather.gov API</a> and use the API response test button below to determine your desired results."
 			input "myWeatherAlert", "enum", title: "Filter results for specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: state.eventTypes
 			input name: "whatAlertUrgency", type: "enum", title: "Poll only for a specific Alert Urgency: ", multiple: true, submitOnChange: true,
-						options: [
-								"immediate": "Immediate",
-								"expected": "Expected",
-								"future": "Future"
-						]
+				options: [
+					"immediate": "Immediate",
+					"expected": "Expected",
+					"future": "Future"
+				]
 
 			input name: "whatAlertCertainty", type: "enum", title: "Poll only for specific Alert Certainty: ", required: false, multiple: true, submitOnChange: true,
-						options: [
-								"possible": "Possible",
-								"likely": "Likely",
-								"observed": "Observed"
-						]
+				options: [
+					"possible": "Possible",
+					"likely": "Likely",
+					"observed": "Observed"
+				]
 		}
 	}
 }
@@ -189,7 +189,7 @@ def RestrictionsPage() {
 		section(UIsupport("logo","")) {
 			paragraph UIsupport("header", " Restrictions")
 			paragraph "Restrict notifications based on modes or a switch.  Override restrictions if the alert is a certain severity or weather type.  For notifications that are restricted, if a PushOver device is enabled alerts can still be sent but not over TTS."
- 			input "modesYes", "bool", title: "Enable restriction of notifications by current mode(s)?", required: true, defaultValue: false, submitOnChange: true
+			input "modesYes", "bool", title: "Enable restriction of notifications by current mode(s)?", required: true, defaultValue: false, submitOnChange: true
 			if(modesYes) input(name:"modes", type: "mode", title: "Restrict notifications when current mode is:", multiple: true, required: false, submitOnChange: true)
 			input "switchYes", "bool", title: "Restrict notifications using a switch?", required: true, defaultValue: false, submitOnChange: true
 			if(switchYes) input "restrictbySwitch", "capability.switch", title: "Use a switch to restrict notfications?", required: false, multiple: false, defaultValue: null, submitOnChange: true
@@ -199,15 +199,14 @@ def RestrictionsPage() {
 			input "modeSeverityYes", "bool", title: "Ignore restrictions for certain severity types?", required: false, defaultValue: false, submitOnChange: true
 			if(modeSeverityYes) input name: "modeSeverity", type: "enum", title: "Severity option(s) that will ignore restrictions: ",
 				options: [
-						"Minor": "Minor",
-						"Moderate": "Moderate",
-						"Severe": "Severe",
-						"Extreme": "Extreme"], required: true, multiple: true, defaultValue: "Severe"
+					"Minor": "Minor",
+					"Moderate": "Moderate",
+					"Severe": "Severe",
+					"Extreme": "Extreme"], required: true, multiple: true, defaultValue: "Severe"
 
 			input "modeWeatherType", "bool", title: "Ignore restrictions for certain weather types?", required: false, defaultValue: false, submitOnChange: true
 
-			if(modeWeatherType) { input name: "WeatherType", type: "enum", title: "Select weather type to ignore restrictions: ", required: true, multiple:true, submitOnChange: true, options: state.eventTypes
-								}
+			if(modeWeatherType) input name: "WeatherType", type: "enum", title: "Select weather type to ignore restrictions: ", required: true, multiple:true, submitOnChange: true, options: state.eventTypes
 			paragraph "<hr>"
 			if(pushovertts) input "pushoverttsalways", "bool", title: "Enable Pushover notifications even when restricted?", required: false, defaultValue: false, submitOnChange: true
 		}
@@ -219,91 +218,93 @@ def SettingsPage() {
 		section(UIsupport("logo","")) {
 			paragraph UIsupport("header", " Settings")
 			paragraph "Enable logging, run a test alert, if errors reset the applications state settings and test your weather alert configurations."
- 				input "logEnable", "bool", title: "Enable Debug Logging?", required: false, defaultValue: false, submitOnChange: true
-				if(logEnable) input "logMinutes", "number", title: "Log for the following number of minutes (0=logs always on):", range: "0..300", required: false, defaultValue:15, submitOnChange: true
-				input "runTest", "bool", title: "Run a test Alert?", required: false, defaultValue: false, submitOnChange: true
-				if(runTest) {
-					app?.updateSetting("runTest",[value:"false",type:"bool"])
-					atomicState.testmsg = true
-					runtestAlert()
-				}
-				input "init", "bool", title: "Reset current application state?", required: false, defaultValue: false, submitOnChange: true
-				if(init) {
-					app?.updateSetting("init",[value:"false",type:"bool"])
-					unschedule()
-					atomicState.alertAnnounced = false
-					ListofAlertsFLD = []
-					state.repeat = false
-					log.warn "NOAA Weather Alerts application state has been reset."
-					initialize()
-				}
-				input "debug", "bool", title: "Debug alert configuration - if expired alerts are available, use those alerts? (only enable this with the test config option below)", required: false, defaultValue: false, submitOnChange: true
-				input "getAPI", "bool", title: "Test alert configuration and display weather.gov API response?", required: false, defaultValue: false, submitOnChange: true
-				if(getAPI) {
-					getAlertMsg()
-					app?.updateSetting("getAPI",[value:"false",type:"bool"])
-					app?.updateSetting("debug",[value:"false",type:"bool"])
+			input "logEnable", "bool", title: "Enable Debug Logging?", required: false, defaultValue: false, submitOnChange: true
+			if(logEnable) input "logMinutes", "number", title: "Log for the following number of minutes (0=logs always on):", range: "0..300", required: false, defaultValue:15, submitOnChange: true
+			input "runTest", "bool", title: "Run a test Alert?", required: false, defaultValue: false, submitOnChange: true
+			if(runTest) {
+				app?.updateSetting("runTest",[value:"false",type:"bool"])
+				atomicState.testmsg = true
+				runtestAlert()
+			}
+			input "init", "bool", title: "Reset current application state?", required: false, defaultValue: false, submitOnChange: true
+			if(init) {
+				app?.updateSetting("init",[value:"false",type:"bool"])
+				unschedule()
+				atomicState.alertAnnounced = false
+				ListofAlertsFLD = []
+				state.repeat = false
+				state.repeatmsg = (String)null
+				if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow((String)null, false) // maybe Switch.off()
+				log.warn "NOAA Weather Alerts application state has been reset."
+				initialize()
+			}
+			input "debug", "bool", title: "Debug alert configuration - if expired alerts are available, use those alerts? (only enable this with the test config option below)", required: false, defaultValue: false, submitOnChange: true
+			input "getAPI", "bool", title: "Test alert configuration and display weather.gov API response?", required: false, defaultValue: false, submitOnChange: true
+			if(getAPI) {
+				getAlertMsg()
+				app?.updateSetting("getAPI",[value:"false",type:"bool"])
+				app?.updateSetting("debug",[value:"false",type:"bool"])
 
-					if(ListofAlertsFLD) {
-						Boolean restrictionSwitch = (switchYes && restrictbySwitch != null && restrictbySwitch.currentState("switch").value == "on")
-						Boolean restrictionMode = (modesYes && modes != null && modes.contains(location.mode))
-						Boolean overrideRestSeverity = (modeSeverityYes && modeSeverity != null)
-						Boolean overrideRestWeather = (modeWeatherType && WeatherType != null)
-						//Boolean alertSwitchReset = (alertSwitchWeatherType && alertSwitchWeatherTypeWatch != null && alertSwitchWeatherTypeWatch.contains(ListofAlertsFLD[0].alertevent))
-						//def testresult = (!(result || result2) || result3 || result4) ? true : false
-						Date date = new Date()
-						SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy h:mm a")
-						String testConfig = ""
-						String customMsg = alertCustomMsg
-						if(useAlertIntro) customMsg = AlertIntro+', '+alertCustomMsg
+				if(ListofAlertsFLD) {
+					Boolean restrictionSwitch = (switchYes && restrictbySwitch != null && restrictbySwitch.currentState("switch").value == "on")
+					Boolean restrictionMode = (modesYes && modes != null && modes.contains(location.mode))
+					Boolean overrideRestSeverity = (modeSeverityYes && modeSeverity != null)
+					Boolean overrideRestWeather = (modeWeatherType && WeatherType != null)
+					//Boolean alertSwitchReset = (alertSwitchWeatherType && alertSwitchWeatherTypeWatch != null && alertSwitchWeatherTypeWatch.contains(ListofAlertsFLD[0].alertevent))
+					//def testresult = (!(result || result2) || result3 || result4) ? true : false
+					Date date = new Date()
+					SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy h:mm a")
+					String testConfig = ""
+					String customMsg = alertCustomMsg
+					if(useAlertIntro) customMsg = AlertIntro+', '+alertCustomMsg
 
-						temp = "<hr><br>Current poll of Weather API: ${sdf.format(date)}<br/><br/>URI: <a href='${state.wxURI}' target=_blank>${state.wxURI}</a><br><br>AlertMSG Built based on configuration:<br><br>${customMsg}<br><br>"
-						temp += "<table border=0><tr colspan=2><td>Current Restriction Settings:</td></tr>"
-						temp += "<tr><td>Switch:</td><td>${restrictionSwitch}</td></tr>"
-						temp += "<tr><td>Mode:</td><td>${restrictionMode}</td></tr>"
-						temp += "<tr><td>Severity Override:</td><td>${overrideRestSeverity}</td></tr>"
-						temp += "<tr><td>Weather Type Override:</td><td>${overrideRestWeather}</td></tr></table></br>"
-						paragraph temp
-						for(y=0;y<ListofAlertsFLD.size();y++) {
-							String testalertmsg
-							overrideRestSeverity = (modeSeverityYes && modeSeverity != null && modeSeverity.contains(ListofAlertsFLD[y].alertseverity))
-							overrideRestWeather = (modeWeatherType && WeatherType != null && WeatherType.contains(ListofAlertsFLD[y].alertevent))
-							if(!restrictionSwitch && !restrictionMode && !overrideRestSeverity && !overrideRestWeather) {
-							//if((!restrictionSwitch || !restrictionMode) && (!modeSeverityYes || !modeWeatherType)) {
-								if(pushovertts) testalertmsg = "alert would be announced on TTS and PushOver device(s)."
-								else testalertmsg = "alert would be announced on TTS device(s)."
-							} else {
-								if (overrideRestSeverity || overrideRestWeather) {
-									if(pushovertts) testalertmsg = "alert would be announced on TTS and PushOver device(s) - override active"
-									else testalertmsg = "alert would be announced only on TTS device(s) - override active"
-								} else {
-									if(pushovertts && pushoverttsalways) testalertmsg = "alert would be announced only on PushOver device(s).  Alert restricted with pushover always true."
-									else testalertmsg = "alert would not be announced.  Alert restricted."
-								}
+					temp = "<hr><br>Current poll of Weather API: ${sdf.format(date)}<br/><br/>URI: <a href='${state.wxURI}' target=_blank>${state.wxURI}</a><br><br>AlertMSG Built based on configuration:<br><br>${customMsg}<br><br>"
+					temp += "<table border=0><tr colspan=2><td>Current Restriction Settings:</td></tr>"
+					temp += "<tr><td>Switch:</td><td>${restrictionSwitch}</td></tr>"
+					temp += "<tr><td>Mode:</td><td>${restrictionMode}</td></tr>"
+					temp += "<tr><td>Severity Override:</td><td>${overrideRestSeverity}</td></tr>"
+					temp += "<tr><td>Weather Type Override:</td><td>${overrideRestWeather}</td></tr></table></br>"
+					paragraph temp
+					for(y=0;y<ListofAlertsFLD.size();y++) {
+						String testalertmsg
+						overrideRestSeverity = (modeSeverityYes && modeSeverity != null && modeSeverity.contains(ListofAlertsFLD[y].alertseverity))
+						overrideRestWeather = (modeWeatherType && WeatherType != null && WeatherType.contains(ListofAlertsFLD[y].alertevent))
+						if(!restrictionSwitch && !restrictionMode && !overrideRestSeverity && !overrideRestWeather) {
+						//if((!restrictionSwitch || !restrictionMode) && (!modeSeverityYes || !modeWeatherType)) {
+							if(pushovertts) testalertmsg = "alert would be announced on TTS and PushOver device(s)."
+							else testalertmsg = "alert would be announced on TTS device(s)."
+						}else{
+							if (overrideRestSeverity || overrideRestWeather) {
+								if(pushovertts) testalertmsg = "alert would be announced on TTS and PushOver device(s) - override active"
+								else testalertmsg = "alert would be announced only on TTS device(s) - override active"
+							}else{
+								if(pushovertts && pushoverttsalways) testalertmsg = "alert would be announced only on PushOver device(s).  Alert restricted with pushover always true."
+								else testalertmsg = "alert would not be announced.  Alert restricted."
 							}
-							testConfig +="<table border=1px><tr><td colspan='2'>Alert ${y+1}/${ListofAlertsFLD.size()} - ${testalertmsg}</td></tr>"
-							testConfig += "<tr><td>Field Name</td><td>Value</td></tr><tr><td>Severity</td><td>${ListofAlertsFLD[y].alertseverity}</td></tr>"
-							testConfig += "<tr><td>Area</td><td>${ListofAlertsFLD[y].alertarea}</td></tr>"
-							testConfig += "<tr><td>Sent</td><td>${ListofAlertsFLD[y].alertsent}</td></tr>"
-							testConfig += "<tr><td>Effective</td><td>${ListofAlertsFLD[y].alerteffective}</td></tr>"
-							testConfig += "<tr><td>Expires</td><td>${ListofAlertsFLD[y].alertexpires}</td></tr>"
-							testConfig += "<tr><td>Status</td><td>${ListofAlertsFLD[y].alertstatus}</td></tr>"
-							testConfig += "<tr><td>Message Type</td><td>${ListofAlertsFLD[y].alertmessagetype}</td></tr>"
-							testConfig += "<tr><td>Category</td><td>${ListofAlertsFLD[y].alertcategory}</td></tr>"
-							testConfig += "<tr><td>Certainty</td><td>${ListofAlertsFLD[y].alertcertainty}</td></tr>"
-							testConfig += "<tr><td>Urgency</td><td>${ListofAlertsFLD[y].alerturgency}</td></tr>"
-							testConfig += "<tr><td>Sender Name</td><td>${ListofAlertsFLD[y].alertsendername}</td></tr>"
-							testConfig += "<tr><td>Event Type</td><td>${ListofAlertsFLD[y].alertevent}</td></tr>"
-							testConfig += "<tr><td>Headline</td><td>${ListofAlertsFLD[y].alertheadline}</td></tr>"
-							testConfig += "<tr><td>Description</td><td>${ListofAlertsFLD[y].alertdescription}</td></tr>"
-							testConfig += "<tr><td>Instruction</td><td>${ListofAlertsFLD[y].alertinstruction}</td></tr></table>"
 						}
-						paragraph testConfig
+						testConfig +="<table border=1px><tr><td colspan='2'>Alert ${y+1}/${ListofAlertsFLD.size()} - ${testalertmsg}</td></tr>"
+						testConfig += "<tr><td>Field Name</td><td>Value</td></tr><tr><td>Severity</td><td>${ListofAlertsFLD[y].alertseverity}</td></tr>"
+						testConfig += "<tr><td>Area</td><td>${ListofAlertsFLD[y].alertarea}</td></tr>"
+						testConfig += "<tr><td>Sent</td><td>${ListofAlertsFLD[y].alertsent}</td></tr>"
+						testConfig += "<tr><td>Effective</td><td>${ListofAlertsFLD[y].alerteffective}</td></tr>"
+						testConfig += "<tr><td>Expires</td><td>${ListofAlertsFLD[y].alertexpires}</td></tr>"
+						testConfig += "<tr><td>Status</td><td>${ListofAlertsFLD[y].alertstatus}</td></tr>"
+						testConfig += "<tr><td>Message Type</td><td>${ListofAlertsFLD[y].alertmessagetype}</td></tr>"
+						testConfig += "<tr><td>Category</td><td>${ListofAlertsFLD[y].alertcategory}</td></tr>"
+						testConfig += "<tr><td>Certainty</td><td>${ListofAlertsFLD[y].alertcertainty}</td></tr>"
+						testConfig += "<tr><td>Urgency</td><td>${ListofAlertsFLD[y].alerturgency}</td></tr>"
+						testConfig += "<tr><td>Sender Name</td><td>${ListofAlertsFLD[y].alertsendername}</td></tr>"
+						testConfig += "<tr><td>Event Type</td><td>${ListofAlertsFLD[y].alertevent}</td></tr>"
+						testConfig += "<tr><td>Headline</td><td>${ListofAlertsFLD[y].alertheadline}</td></tr>"
+						testConfig += "<tr><td>Description</td><td>${ListofAlertsFLD[y].alertdescription}</td></tr>"
+						testConfig += "<tr><td>Instruction</td><td>${ListofAlertsFLD[y].alertinstruction}</td></tr></table>"
 					}
-					else paragraph "There are no reported weather alerts in your area, the weather alerts available have expired, the api.weather.gov api is not available, or you need to change NOAA Weather Alert options to acquire desired results.<br><br>Current URI: <a href='${state.wxURI}' target=_blank>${state.wxURI}</a>"
+					paragraph testConfig
 				}
+				else paragraph "There are no reported weather alerts in your area, the weather alerts available have expired, the api.weather.gov api is not available, or you need to change NOAA Weather Alert options to acquire desired results.<br><br>Current URI: <a href='${state.wxURI}' target=_blank>${state.wxURI}</a>"
 			}
 		}
+	}
 }
 
 // Main Application Routines
@@ -313,7 +314,7 @@ def main() {
 	if(ListofAlertsFLD) {
 		if((Boolean)atomicState.alertAnnounced) {
 			if(logEnable) log.info "No new alerts.  Waiting ${whatPoll.toInteger()} minute(s) before next poll..."
-		} else {
+		}else{
 			alertNow((String)ListofAlertsFLD[0].alertmsg, false)
 			if(repeatYes && !(Boolean)state.repeat){ // && !ListofAlertsFLD[0].alertrepeat) {
 				state.repeatmsg = (String)ListofAlertsFLD[0].alertmsg
@@ -327,7 +328,7 @@ def main() {
 			//def noaaTile = getChildDevice("NOAA")
 			//if(noaaTile) noaaTile.refreshTile()
 		}
-	} else if(logEnable) log.info "No alerts.  Waiting ${whatPoll.toInteger()} minute(s) before next poll..."
+	}else if(logEnable) log.info "No alerts.  Waiting ${whatPoll.toInteger()} minute(s) before next poll..."
 }
 
 void callRefreshTile(){
@@ -352,28 +353,25 @@ void alertNow(String alertmsg, Boolean repeatCheck){
 					if(alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", "enum", title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: state.eventTypes
 				}*/
 
-	// no restrictions
-	if(!restrictionSwitch && !restrictionMode && !overrideRestSeverity && !overrideRestWeather) {//(!modeSeverityYes && !modeWeatherType)) {
-		if(alertmsg!=(String)null){
+	if(alertmsg!=(String)null){
+		// no restrictions
+		if(!restrictionSwitch && !restrictionMode && !overrideRestSeverity && !overrideRestWeather) {//(!modeSeverityYes && !modeWeatherType)) {
 			log.info "Sending alert: ${alertmsg}"
 			pushNow(alertmsg, repeatCheck)
 			if(UsealertSwitch && alertSwitch) alertSwitch.on()
 			talkNow(alertmsg, repeatCheck)
-		}
-	} else {
-		if(overrideRestSeverity || overrideRestWeather) {
-			if(alertmsg!=(String)null){
-				log.info "Sending alert: ${alertmsg}"
+		}else{
+			if(overrideRestSeverity || overrideRestWeather) {
+				log.info "Sending alert (override): ${alertmsg}"
 				pushNow(alertmsg, repeatCheck)
 				if(UsealertSwitch && alertSwitch) alertSwitch.on()
 				talkNow(alertmsg, repeatCheck)
+			}else{
+				if(pushoverttsalways) {
+					log.info "Restrictions are enabled but PushoverTTS enabled.  Waiting ${whatPoll.toInteger()} minutes before next poll..."
+					pushNow(alertmsg, repeatCheck)
+				}else log.info "Restrictions are enabled.  Waiting ${whatPoll.toInteger()} minutes before next poll..."
 			}
-		} else {
-			if(alertmsg!=(String)null && pushoverttsalways) {
-				log.info "Restrictions are enabled but PushoverTTS enabled.  Waiting ${whatPoll.toInteger()} minutes before next poll..."
-				pushNow(alertmsg, repeatCheck)
-			}
-			if(alertmsg!=(String)null && !pushoverttsalways) log.info "Restrictions are enabled!  Waiting ${whatPoll.toInteger()} minutes before next poll..."
 		}
 	}
 	Boolean alertSwitchReset = false
@@ -392,19 +390,19 @@ void repeatNow(){
 			state.rptNum = repeatTimes!=null ? repeatTimes : 1
 			if(logEnable) log.debug "Starting repeating alerts."
 		}
-	
+
 		if(state.rptNum > 0){
 			state.rptNum = state.rptNum - 1
 			if(logEnable) log.debug "Repeating alert in ${repeatMinutes} minute(s).  This is ${state.rptCount}/${repeatTimes} repeated alert(s). Repeat State: ${state.repeat}"
 			runIn(repeatMinutes.toInteger()*60,repeatNow)
-		} else {
+		}else{
 			if(logEnable) log.debug "Finished repeating alerts."
 			//state.rptCount = 0
 			//state.rptNum = repeatTimes.toInteger()
 			state.repeat = false
 			state.repeatmsg = (String)null
 		}
-	} else {
+	}else{
 		if(logEnable) log.debug "Repeat not enabled or no message Enabled: $repeatYes msg: $state.repeatmsg State: ${state.repeat}"
 		//match state
 		state.repeat = false
@@ -664,18 +662,18 @@ void talkNow(String alertmsg, Boolean repeatCheck) {
 	if(repeatCheck) {
 		if(useAlertIntro) alertmsg = "Repeating previous alert,, ${AlertIntro} " + alertmsg
 		else alertmsg = "Repeating previous alert,," + alertmsg
-	} else if(useAlertIntro) alertmsg = "${AlertIntro}, " + alertmsg
+	}else if(useAlertIntro) alertmsg = "${AlertIntro}, " + alertmsg
 
 	speechDuration = Math.max(Math.round(alertmsg.length()/12),2)+3
 	atomicState.speechDuration2 = speechDuration * 1000
 
-  	if(musicmode) {
+	if(musicmode) {
 		try {
 			musicspeaker.playTextAndRestore(alertmsg.toLowerCase(), speakervolume)
 			if(logEnable) log.debug "Sending alert to Music Speaker(s)."
 		}
 		catch (any) { log.warn "Music Player device(s) has not been selected or not supported." }
-  	}
+	}
 
 	if(echoSpeaks2) {
 		try {
@@ -744,7 +742,7 @@ List getTile() {
 		if((Boolean)atomicState.testmsg) {
 			msg << [alertmsg:(String)state.repeatmsg]
 			atomicState.testmsg = false
-		} else {
+		}else{
 			if(ListofAlertsFLD) {
 				for(x=0;x<ListofAlertsFLD.size();x++) {
 					if(logEnable) log.info "Creating data information for tile display."
@@ -793,7 +791,7 @@ Map getResponseURL() {
 	if(useCustomCords) {
 		latitude = "${customlatitude}".toString()
 		longitude = "${customlongitude}".toString()
-	} else {
+	}else{
 		latitude = "${location.latitude}".toString()
 		longitude = "${location.longitude}".toString()
 	}
@@ -861,7 +859,7 @@ void checkState() {
 	if(repeatMinutes==null){
 		app.updateSetting("repeatMinutes",[value:15,type:"number"])
 		t0=15
-	} else t0=repeatMinutes.toInteger()
+	}else t0=repeatMinutes.toInteger()
 	state.frequency = t0
 
 	state.rptCount = 0
@@ -872,7 +870,7 @@ void installCheck(){
 	state.appInstalled = app.getInstallationState()
 	if((String)state.appInstalled != 'COMPLETE'){
 		section{paragraph "Please hit 'Done' to install ${app.label} "}
-  	}
+	}
 }
 
 void initialize() {
@@ -888,9 +886,9 @@ void initialize() {
 		if(logMinutes!=null)myLog=logMinutes.toInteger()
 		if(myLog!=0){
 			log.warn "Debug messages set to automatically disable in ${myLog} minute(s)."
-			runIn((myLog * 60),logsOff)
-		} else log.warn "Debug logs set to not automatically disable."
-	} else log.info "Debug logs disabled."
+			runIn((myLog*60),logsOff)
+		}else log.warn "Debug logs set to not automatically disable."
+	}else log.info "Debug logs disabled."
 
 	Integer myPoll=5
 	if(whatPoll!=null)myPoll=whatPoll.toInteger()
