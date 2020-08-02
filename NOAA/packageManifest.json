@@ -3,7 +3,7 @@
    "minimumHEVersion": "2.1.9",
    "author": "Aaron Ward",
    "dateReleased": "2020-08-02",
-   "version": "3.0.020",
+   "version": "4.0.000",
    "licenseFile": "",
    "releaseNotes": "Additional alert logic bug squashed.",
    "documentationLink": "https://github.com/PrayerfulDrop/Hubitat/blob/master/NOAA/README.md",
