@@ -19,10 +19,10 @@
  *			  Donations are always appreciated: https://www.paypal.me/aaronmward
  * ------------------------------------------------------------------------------------------------------------------------------
  *
- * Last Update: 7/29/2020
+ * Last Update: 8/3/2020
  */
 
-static String version() { return "4.0.000" }
+static String version() { return "4.0.001" }
 
 import groovy.transform.Field
 import groovy.json.*
@@ -222,13 +222,13 @@ def SettingsPage() {
 			if(logEnable) input "logMinutes", "number", title: "Log for the following number of minutes (0=logs always on):", range: "0..300", required: false, defaultValue:15, submitOnChange: true
 			input "runTest", "bool", title: "Run a test Alert?", required: false, defaultValue: false, submitOnChange: true
 			if(runTest) {
-				app?.updateSetting("runTest",[value:"false",type:"bool"])
+				app.updateSetting("runTest",[value:"false",type:"bool"])
 				atomicState.testmsg = true
 				runtestAlert()
 			}
 			input "init", "bool", title: "Reset current application state?", required: false, defaultValue: false, submitOnChange: true
 			if(init) {
-				app?.updateSetting("init",[value:"false",type:"bool"])
+				app.updateSetting("init",[value:"false",type:"bool"])
 				unschedule()
 				atomicState.alertAnnounced = false
 				ListofAlertsFLD = []
@@ -242,8 +242,8 @@ def SettingsPage() {
 			input "getAPI", "bool", title: "Test alert configuration and display weather.gov API response?", required: false, defaultValue: false, submitOnChange: true
 			if(getAPI) {
 				getAlertMsg()
-				app?.updateSetting("getAPI",[value:"false",type:"bool"])
-				app?.updateSetting("debug",[value:"false",type:"bool"])
+				app.updateSetting("getAPI",[value:"false",type:"bool"])
+				app.updateSetting("debug",[value:"false",type:"bool"])
 
 				if(ListofAlertsFLD) {
 					Boolean restrictionSwitch = (switchYes && restrictbySwitch != null && restrictbySwitch.currentState("switch").value == "on")
@@ -664,9 +664,6 @@ void talkNow(String alertmsg, Boolean repeatCheck) {
 		else alertmsg = "Repeating previous alert,," + alertmsg
 	}else if(useAlertIntro) alertmsg = "${AlertIntro}, " + alertmsg
 
-	speechDuration = Math.max(Math.round(alertmsg.length()/12),2)+3
-	atomicState.speechDuration2 = speechDuration * 1000
-
 	if(musicmode) {
 		try {
 			musicspeaker.playTextAndRestore(alertmsg.toLowerCase(), speakervolume)
@@ -687,11 +684,14 @@ void talkNow(String alertmsg, Boolean repeatCheck) {
 		try {
 			speechspeaker.initialize()
 			if(logEnable) log.debug "Initializing Speech Speaker"
-			pauseExecution(2500)
+			//pauseExecution(2500)
 		}
 		catch (any) { if(logEnable) log.debug "Speech device doesn't support initialize command" }
+
+		Boolean supportsSetVolume=false
 		try {
 			speechspeaker.setVolume(speakervolume)
+			supportsSetVolume=true
 			if(logEnable) log.debug "Setting Speech Speaker to volume level: ${speakervolume}"
 			pauseExecution(2000)
 		}
@@ -703,13 +703,16 @@ void talkNow(String alertmsg, Boolean repeatCheck) {
 		catch (any) { log.warn "Speech or Echo Speaks device(s) has not been selected or not supported." }
 
 		try {
-			if(speakervolRestore) {
-				pauseExecution(atomicState.speechDuration2)
+			if(speakervolRestore && supportsSetVolume) {
+				Integer speechDuration = Math.max(Math.round(alertmsg.length()/12),2)+3
+				Long speechDuration2 = speechDuration * 1000L
+				pauseExecution(speechDuration2)
+
 				speechspeaker.setVolume(speakervolRestore)
 				if(logEnable) log.debug "Restoring Speech Speaker to volume level: ${speakervolRestore}"
 			}
 		}
-			catch (any) { if (logEnable) log.debug "Speech speaker doesn't support restore volume command" }
+		catch (any) { if (logEnable) log.debug "Speech speaker doesn't support restore volume command" }
 	}
 }
 
@@ -722,15 +725,26 @@ void pushNow(String alertmsg, Boolean repeatCheck) {
 			else alertmsg = "[Alert Repeat] " + alertmsg
 		}
 
-		def m = alertmsg =~ /(.|[\r\n]){1,1023}\W/
+		String m1 = alertmsg.replaceAll(/(\r\n|\r|\n|\\r\\n|\\r|\\n)+/, " ")
+		Integer asize=m1.length()
+		Integer a=0
+		Integer i=0
+		while (i<asize){
+			Integer end=(Math.min(asize-i, 1023))
+			fullalert[a]=m1.substring(i,i+end)
+			a=a+1
+			i=i+end
+		}
+/*		String m1 = alertmsg.replaceAll(/(\r\n|\r|\n|\\r\\n|\\r|\\n)+/, " ")
+		def m = m1 =~ /(.|[\r\n]){1,1023}\W/
 		while(m.find()) {
 			fullalert << m.group()
-		}
+		}*/
 
 		for(x=0;x<fullalert.size();x++) {
 			if(fullalert.size()>1) pushoverdevice.deviceNotification("(${x+1}/${fullalert.size()}) ${fullalert[x]}")
 			else pushoverdevice.deviceNotification("${fullalert[x]}")
-			pauseExecution(1000)
+			//pauseExecution(1000)
 		}
 	}
 }
@@ -952,5 +966,5 @@ static String UIsupport(String type, String txt) {
 
 void logsOff(){
 	log.warn "Debug logging disabled."
-	app?.updateSetting("logEnable",[value:"false",type:"bool"])
+	app.updateSetting("logEnable",[value:"false",type:"bool"])
 }
