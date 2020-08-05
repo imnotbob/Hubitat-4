@@ -20,7 +20,7 @@
  *			  Donations are always appreciated: https://www.paypal.me/aaronmward
  * ------------------------------------------------------------------------------------------------------------------------------
  *
- * Last Update: 6/22/2020 : 1:41PM
+ * Last Update: 8/4/2020
  */
 
 metadata {
@@ -74,7 +74,7 @@ void refreshTile() {
 		catch (e) {}
 		if(!noaaData) { 
 			sendEvent(name: "Alerts", value: "No weather alerts to report.", displayed: true) 
-			runIn(60, refreshTile)
+			//runIn(60, refreshTile)
 		}
 		else {
 			if(logEnable) log.info "Received the from NOAA Alerts: ${noaaData}"
@@ -97,6 +97,6 @@ void refreshTile() {
 					pauseExecution(8000)
 				}
 			}
-			runIn(5, refreshTile)
+			runIn(15, refreshTile)
 		}
 }

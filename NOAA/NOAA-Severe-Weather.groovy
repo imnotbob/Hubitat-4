@@ -19,10 +19,10 @@
  *			  Donations are always appreciated: https://www.paypal.me/aaronmward
  * ------------------------------------------------------------------------------------------------------------------------------
  *
- * Last Update: 8/3/2020
+ * Last Update: 8/4/2020
  */
 
-static String version() { return "4.0.001" }
+static String version() { return "4.0.002" }
 
 import groovy.transform.Field
 import groovy.json.*
@@ -319,14 +319,8 @@ def main() {
 			if(repeatYes && !(Boolean)state.repeat){ // && !ListofAlertsFLD[0].alertrepeat) {
 				state.repeatmsg = (String)ListofAlertsFLD[0].alertmsg
 				repeatNow()
-			} /*else {
-				state.repeatmsg = (String)null
-				state.repeat = false
-				atomicState.alertAnnounced = true
-			}*/
+			} 
 			runIn(1,callRefreshTile)
-			//def noaaTile = getChildDevice("NOAA")
-			//if(noaaTile) noaaTile.refreshTile()
 		}
 	}else if(logEnable) log.info "No alerts.  Waiting ${whatPoll.toInteger()} minute(s) before next poll..."
 }
@@ -430,6 +424,7 @@ void getAlertMsg() {
 			if(result.features[i].properties.ends) alertexpires = result.features[i].properties.ends
 			else alertexpires = result.features[i].properties.expires
 
+			if(logEnable) log.debug "alertexpires ${alertexpires}       ${timestamp}"
 			//if alert has expired ignore alert
 			if((alertexpires.compareTo(timestamp)>=0) || settings.debug) {
 				//if specific weatheralerts is chosen
@@ -449,7 +444,10 @@ void getAlertMsg() {
 						isNewNotice = true
 						IsnewList = true
 					}
-					if(isNewNotice && logEnable) log.debug "${msg.alertid} is new in ListofAlerts: ${IsnewList}"
+					if(logEnable){
+						if(isNewNotice) log.debug "Valid ${msg.alertid} is new in ListofAlerts: ${IsnewList}"
+						else log.debug "Valid ${msg.alertid} exists in ListofAlerts"
+					}
 					ListofAlerts << msg
 				}
 			}
@@ -465,13 +463,20 @@ void getAlertMsg() {
 					input (name:"alertSwitchWeatherType", type: "bool", title: "Turn off switch if certain weather alert types expire?", required: false, defaultValue: false, submitOnChange: true)
 					if(alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", "enum", title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: state.eventTypes
 				}*/
+	Boolean hadAlerts=false
+	if(ListofAlertsFLD) hadAlerts=true
 	ListofAlertsFLD = ListofAlerts
-//	state.ListofAlerts = ListofAlerts
-	if(!ListofAlerts){
+	if(logEnable && ListofAlerts){
+		log.debug "ListofAlerts is ${ListofAlerts}"
+		state.ListofAlerts = ListofAlerts
+	}else state.remove('ListofAlerts')
+	if(hadAlerts && !ListofAlerts){
+		if(logEnable) log.debug "ending alerts"
 		if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow((String)null, false) // maybe Switch.off()
 		atomicState.alertAnnounced = false
 		state.repeat = false
 		state.repeatmsg = (String)null
+		runIn(1,callRefreshTile)
 	}
 }
 
@@ -632,8 +637,6 @@ void runtestAlert() {
 		repeatNow()
 	}
 	runIn(1,callRefreshTile)
-	//def noaaTile = getChildDevice("NOAA")
-	//if(noaaTile) noaaTile.refreshTile()
 }
 
 String buildTestAlert() {
@@ -894,6 +897,7 @@ void initialize() {
 	createChildDevices()
 	state.repeat = false
 	state.repeatmsg = (String)null
+	runIn(1,callRefreshTile)
 	//if(logEnable && logMinutes.toInteger() != 0) {
 	if(logEnable){
 		Integer myLog=15
