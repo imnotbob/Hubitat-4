@@ -19,7 +19,7 @@
  *			  Donations are always appreciated: https://www.paypal.me/aaronmward
  * ------------------------------------------------------------------------------------------------------------------------------
  *
- * Last Update: 8/4/2020
+ * Last Update: 8/5/2020
  */
 
 static String version() { return "4.0.002" }
@@ -465,18 +465,20 @@ void getAlertMsg() {
 				}*/
 	Boolean hadAlerts=false
 	if(ListofAlertsFLD) hadAlerts=true
-	ListofAlertsFLD = ListofAlerts
-	if(logEnable && ListofAlerts){
-		log.debug "ListofAlerts is ${ListofAlerts}"
-		state.ListofAlerts = ListofAlerts
-	}else state.remove('ListofAlerts')
-	if(hadAlerts && !ListofAlerts){
-		if(logEnable) log.debug "ending alerts"
-		if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow((String)null, false) // maybe Switch.off()
-		atomicState.alertAnnounced = false
-		state.repeat = false
-		state.repeatmsg = (String)null
-		runIn(1,callRefreshTile)
+	if(result!=null){ // deal with network outage; don't drop alerts.
+		ListofAlertsFLD = ListofAlerts
+		if(logEnable && ListofAlerts){
+			log.debug "ListofAlerts is ${ListofAlerts}"
+			state.ListofAlerts = ListofAlerts
+		}else state.remove('ListofAlerts')
+		if(hadAlerts && !ListofAlerts){
+			if(logEnable) log.debug "ending alerts"
+			if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow((String)null, false) // maybe Switch.off()
+			atomicState.alertAnnounced = false
+			state.repeat = false
+			state.repeatmsg = (String)null
+			runIn(1,callRefreshTile)
+		}
 	}
 }
 
