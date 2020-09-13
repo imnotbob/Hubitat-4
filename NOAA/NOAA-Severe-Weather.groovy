@@ -19,7 +19,7 @@
  *			  Donations are always appreciated: https://www.paypal.me/aaronmward
  * ------------------------------------------------------------------------------------------------------------------------------
  *
- * Last Update: 8/5/2020
+ * Last Update: 9/13/2020
  */
 
 static String version() { return "4.0.002" }
@@ -311,18 +311,13 @@ def SettingsPage() {
 def main() {
 	// Get the alert message
 	getAlertMsg()
-	if(ListofAlertsFLD) {
-		if((Boolean)atomicState.alertAnnounced) {
-			if(logEnable) log.info "No new alerts.  Waiting ${whatPoll.toInteger()} minute(s) before next poll..."
-		}else{
-			alertNow((String)ListofAlertsFLD[0].alertmsg, false)
-			if(repeatYes && !(Boolean)state.repeat){ // && !ListofAlertsFLD[0].alertrepeat) {
-				state.repeatmsg = (String)ListofAlertsFLD[0].alertmsg
-				repeatNow()
-			} 
-			runIn(1,callRefreshTile)
-		}
-	}else if(logEnable) log.info "No alerts.  Waiting ${whatPoll.toInteger()} minute(s) before next poll..."
+	if(ListofAlertsFLD && !(Boolean)atomicState.alertAnnounced) {
+		alertNow((String)ListofAlertsFLD[0].alertmsg, false)
+		if(repeatYes){
+			state.repeatmsg = (String)ListofAlertsFLD[0].alertmsg
+			repeatNow(true)
+		}else runIn(1,callRefreshTile)
+	} else if(logEnable) log.info "No new alerts.  Waiting ${whatPoll.toInteger()} minute(s) before next poll..."
 }
 
 void callRefreshTile(){
@@ -373,31 +368,34 @@ void alertNow(String alertmsg, Boolean repeatCheck){
 	if(alertmsg==(String)null && UsealertSwitch && alertSwitch && (alertSwitchOff || alertSwitchReset)) alertSwitch.off()
 }
 
-void repeatNow(){
-	if(repeatYes && (String)state.repeatmsg) {
-		if((Boolean)state.repeat) {
-			alertNow((String)state.repeatmsg, true)
-			state.rptCount = state.rptCount + 1
-		}else{
-			state.repeat = true
-			state.rptCount = 0
-			state.rptNum = repeatTimes!=null ? repeatTimes : 1
-			if(logEnable) log.debug "Starting repeating alerts."
-		}
-
-		if(state.rptNum > 0){
-			state.rptNum = state.rptNum - 1
-			if(logEnable) log.debug "Repeating alert in ${repeatMinutes} minute(s).  This is ${state.rptCount}/${repeatTimes} repeated alert(s). Repeat State: ${state.repeat}"
-			runIn(repeatMinutes.toInteger()*60,repeatNow)
-		}else{
-			if(logEnable) log.debug "Finished repeating alerts."
-			//state.rptCount = 0
-			//state.rptNum = repeatTimes.toInteger()
+void repeatNow(Boolean newmsg=false){
+	Boolean doRefresh=true
+	if(repeatYes && (String)state.repeatmsg && repeatMinutes > 0) {
+		if(!newmsg && state.rptCount >= state.rptNum){
 			state.repeat = false
 			state.repeatmsg = (String)null
+			if(logEnable) log.debug "Finished repeating alerts."
+		}else{
+			if(newmsg){
+				state.rptCount = 0
+				state.rptNum = repeatTimes!=null ? repeatTimes.toInteger() : 1
+				if(logEnable) log.debug "Starting repeating alerts."
+			}else{
+				if((Boolean)state.repeat) {
+					if(logEnable) log.debug "Sending repeat message"
+					alertNow((String)state.repeatmsg, true)
+					runIn(1,callRefreshTile)
+				}
+			}
+			if((Boolean)state.repeat && (Integer)state.rptCount < (Integer)state.rptNum){
+				state.repeat = true
+				state.rptCount = (Integer)state.rptCount + 1
+				if(logEnable) log.debug "Scheduling repeating alert in ${repeatMinutes} minute(s).  This is ${state.rptCount}/${state.rptNum} repeated alert(s). Repeat State: ${state.repeat}"
+				runIn(repeatMinutes.toInteger()*60,repeatNow)
+			}
 		}
 	}else{
-		if(logEnable) log.debug "Repeat not enabled or no message Enabled: $repeatYes msg: $state.repeatmsg State: ${state.repeat}"
+		if(logEnable) log.debug "Repeat not enabled or no message Enabled: $repeatYes msg: $state.repeatmsg State: ${state.repeat} Minutes: ${repeatMinutes}"
 		//match state
 		state.repeat = false
 		state.repeatmsg = (String)null
@@ -477,6 +475,7 @@ void getAlertMsg() {
 			atomicState.alertAnnounced = false
 			state.repeat = false
 			state.repeatmsg = (String)null
+			unschedule(repeatNow)
 			runIn(1,callRefreshTile)
 		}
 	}
@@ -636,9 +635,8 @@ void runtestAlert() {
 	if(repeatYes){
 		state.repeatmsg=msg
 		state.repeat=false
-		repeatNow()
-	}
-	runIn(1,callRefreshTile)
+		repeatNow(true)
+	} else runIn(1,callRefreshTile)
 }
 
 String buildTestAlert() {
@@ -726,7 +724,7 @@ void pushNow(String alertmsg, Boolean repeatCheck) {
 		List fullalert = []
 		if(logEnable) log.debug "Sending Pushover message."
 		if(repeatCheck) {
-			if(repeatTimes>1) alertmsg = "[Alert Repeat ${state.rptCount}/${repeatTimes}] " + alertmsg
+			if(repeatTimes>1) alertmsg = "[Alert Repeat ${state.rptCount}/${state.rptNum}] " + alertmsg
 			else alertmsg = "[Alert Repeat] " + alertmsg
 		}
 
@@ -879,7 +877,6 @@ void checkState() {
 		app.updateSetting("repeatMinutes",[value:15,type:"number"])
 		t0=15
 	}else t0=repeatMinutes.toInteger()
-	state.frequency = t0
 
 	state.rptCount = 0
 	if(!(Boolean)state.repeat) state.repeatmsg = (String)null
@@ -900,7 +897,6 @@ void initialize() {
 	state.repeat = false
 	state.repeatmsg = (String)null
 	runIn(1,callRefreshTile)
-	//if(logEnable && logMinutes.toInteger() != 0) {
 	if(logEnable){
 		Integer myLog=15
 		if(logMinutes!=null)myLog=logMinutes.toInteger()
@@ -939,6 +935,10 @@ void installed() {
 
 void updated() {
 	if(logEnable) log.debug "Updated with settings: ${settings}"
+	state.remove('num')
+	state.remove('speechDuration2')
+	state.remove('frequency')
+	state.remove('count')
 	initialize()
 }
 
