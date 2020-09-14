@@ -6,8 +6,8 @@
    "version": "4.0.003",
    "licenseFile": "",
    "releaseNotes": "Cleanup of Alert tests and repeat operations.",
-   "documentationLink": "https://github.com/PrayerfulDrop/Hubitat/blob/master/NOAA/README.md",
-   "communityLink": "https://community.hubitat.com/t/release-noaa-weather-alerts/11141/515",
+   "documentationLink": "https://github.com/imnotbob/Hubitat-4/blob/master/NOAA/README.md",
+   "communityLink": "https://community.hubitat.com/t/release-noaa-weather-alerts/50588",
    "apps" : [
    	{
    		"id" : "82a848f3-e61c-429e-b587-2019b559f509",

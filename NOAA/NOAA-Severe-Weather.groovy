@@ -1,6 +1,6 @@
 /*  **************** NOAA Weather Alerts ****************
  *
- *  Hubitat Import URL: https://raw.githubusercontent.com/PrayerfulDrop/Hubitat/master/NOAA/NOAA-Severe-Weather.groovy
+ *  Hubitat Import URL: https://raw.githubusercontent.com/imnotbob/Hubitat-4/master/NOAA/NOAA-Severe-Weather.groovy
  *
  *  Copyright 2019 Aaron Ward
  *
@@ -14,10 +14,6 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *
- * ------------------------------------------------------------------------------------------------------------------------------
- *			  Donations are always appreciated: https://www.paypal.me/aaronmward
- * ------------------------------------------------------------------------------------------------------------------------------
  *
  * Last Update: 9/13/2020
  */
@@ -41,7 +37,7 @@ definition(
 	iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
 	iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
 	iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
-	documentationLink: "https://github.com/PrayerfulDrop/Hubitat/blob/master/NOAA/README.md",
+	documentationLink: "https://github.com/imnotbob/Hubitat-4/blob/master/NOAA/README.md",
 	singleInstance: true,
 	oauth: false,
 	pausable: true)
@@ -964,7 +960,7 @@ void uninstalled() {
 static String UIsupport(String type, String txt) {
 	switch(type) {
 		case "logo":
-			return "<table border=0><thead><tr><th><img border=0 style='max-width:100px' src='https://raw.githubusercontent.com/PrayerfulDrop/Hubitat/master/NOAA/Support/NOAA.png'></th><th style='padding:10px' align=left><font style='font-size:34px;color:#1A77C9;font-weight: bold'>NOAA Weather Alerts</font><br><font style='font-size:14px;font-weight: none'>This application provides customized Weather Alert announcements.</font></tr></thead></table><br><hr style='margin-top:-15px;background-color:#1A77C9; height: 1px; border: 0;'></hr>"
+			return "<table border=0><thead><tr><th><img border=0 style='max-width:100px' src='https://raw.githubusercontent.com/imnotbob/Hubitat-4/master/NOAA/Support/NOAA.png'></th><th style='padding:10px' align=left><font style='font-size:34px;color:#1A77C9;font-weight: bold'>NOAA Weather Alerts</font><br><font style='font-size:14px;font-weight: none'>This application provides customized Weather Alert announcements.</font></tr></thead></table><br><hr style='margin-top:-15px;background-color:#1A77C9; height: 1px; border: 0;'></hr>"
 			break
 		case "line":
 			return "<hr style='background-color:#1A77C9; height: 1px; border: 0;'></hr>"
@@ -973,13 +969,13 @@ static String UIsupport(String type, String txt) {
 			return "<div style='color:#ffffff;font-weight: bold;background-color:#1A7BC7;border: 1px solid;box-shadow: 2px 3px #A9A9A9'>${txt}</div>"
 			break
 		case "footer":
-			return "<div style='color:#1A77C9;text-align:center'>App/Driver v${version()}<br>Developed by: Aaron Ward<br><a href='https://paypal.me/aaronmward?locale.x=en_US' target='_blank'><img src='https://raw.githubusercontent.com/PrayerfulDrop/Hubitat/master/support/images/paypal.jpg' border='0' alt='PayPal Logo'></a></div>"
+			return "<div style='color:#1A77C9;text-align:center'>App/Driver v${version()}<br>Originally Developed by: Aaron Ward<br></div>"
 			break
 		case "configured":
-			return "<img border=0 style='max-width:15px' src='https://raw.githubusercontent.com/PrayerfulDrop/Hubitat/master/support/images/Checked.svg'>"
+			return "<img border=0 style='max-width:15px' src='https://raw.githubusercontent.com/imnotbob/Hubitat-4/master/support/images/Checked.svg'>"
 			break
 		case "attention":
-			return "<img border=0 style='max-width:15px' src='https://raw.githubusercontent.com/PrayerfulDrop/Hubitat/master/support/images/Attention.svg'>"
+			return "<img border=0 style='max-width:15px' src='https://raw.githubusercontent.com/imnotbob/Hubitat-4/master/support/images/Attention.svg'>"
 			break
 	}
 }

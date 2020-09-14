@@ -1,7 +1,7 @@
 /**
  *  ****************  NOAA Tile Driver  ****************
  *
- *  importUrl: "https://raw.githubusercontent.com/PrayerfulDrop/Hubitat/master/NOAA/NOAA-Tile-Driver.groovy"
+ *  importUrl: https://raw.githubusercontent.com/imnotbob/Hubitat-4/master/NOAA/NOAA-Tile-Driver.groovy
  *
  *  Copyright 2019 Aaron Ward
  *
@@ -16,11 +16,7 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * ------------------------------------------------------------------------------------------------------------------------------
- *			  Donations are always appreciated: https://www.paypal.me/aaronmward
- * ------------------------------------------------------------------------------------------------------------------------------
- *
- * Last Update: 8/4/2020
+ * Last Update: 9/13/2020
  */
 
 metadata {
@@ -28,7 +24,7 @@ metadata {
 		name: "NOAA Tile",
 		namespace: "aaronward",
 		author: "Aaron Ward",
-		importUrl: "https://raw.githubusercontent.com/PrayerfulDrop/Hubitat/master/NOAA/NOAA-Tile-Driver.groovy") {
+		importUrl: "https://raw.githubusercontent.com/imnotbob/Hubitat-4/master/NOAA/NOAA-Tile-Driver.groovy") {
 		command "sendNoaaTile", ["string"]
 		command "initialize"
 		command "refreshTile"
