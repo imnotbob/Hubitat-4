@@ -22,7 +22,7 @@
  * Last Update: 9/13/2020
  */
 
-static String version() { return "4.0.002" }
+static String version() { return "4.0.003" }
 
 import groovy.transform.Field
 import groovy.json.*
@@ -223,18 +223,17 @@ def SettingsPage() {
 			input "runTest", "bool", title: "Run a test Alert?", required: false, defaultValue: false, submitOnChange: true
 			if(runTest) {
 				app.updateSetting("runTest",[value:"false",type:"bool"])
-				atomicState.testmsg = true
 				runtestAlert()
 			}
 			input "init", "bool", title: "Reset current application state?", required: false, defaultValue: false, submitOnChange: true
 			if(init) {
 				app.updateSetting("init",[value:"false",type:"bool"])
 				unschedule()
-				atomicState.alertAnnounced = false
 				ListofAlertsFLD = []
 				state.repeat = false
 				state.repeatmsg = (String)null
 				if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow((String)null, false) // maybe Switch.off()
+				atomicState.alertAnnounced = false
 				log.warn "NOAA Weather Alerts application state has been reset."
 				initialize()
 			}
@@ -628,15 +627,31 @@ static String alertFormatArea(String msg) {
 
 //Test Alert Section
 void runtestAlert() {
+	atomicState.testmsg = true
+	Integer endTime=30
 	if(logEnable) log.debug "Initiating a test alert."
 	String msg=buildTestAlert()
+	state.repeatmsg=msg
 	atomicState.alertAnnounced = false
 	alertNow(msg, false)
 	if(repeatYes){
-		state.repeatmsg=msg
+		if(logEnable) log.debug "Initiating a repeat process (ends in 5 minutes) for test alert."
 		state.repeat=false
 		repeatNow(true)
+		endTime=300
 	} else runIn(1,callRefreshTile)
+	runIn(endTime,endTest)
+}
+
+void endTest(){
+	if(logEnable) log.debug "Ending repeat for test alert."
+	atomicState.testmsg = false
+	if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow((String)null, false) // maybe Switch.off()
+	atomicState.alertAnnounced = false
+	state.repeat = false
+	state.repeatmsg = (String)null
+	unschedule(repeatNow)
+	runIn(1,callRefreshTile)
 }
 
 String buildTestAlert() {
@@ -755,14 +770,13 @@ void pushNow(String alertmsg, Boolean repeatCheck) {
 
 List getTile() {
 	List msg = []
+	if(logEnable) log.info "Creating data information for tile display."
 	try {
 		if((Boolean)atomicState.testmsg) {
 			msg << [alertmsg:(String)state.repeatmsg]
-			atomicState.testmsg = false
 		}else{
 			if(ListofAlertsFLD) {
 				for(x=0;x<ListofAlertsFLD.size();x++) {
-					if(logEnable) log.info "Creating data information for tile display."
 					msg << [alertmsg:ListofAlertsFLD[x].alertmsg]
 				}
 			}
