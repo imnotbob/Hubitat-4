@@ -15,10 +15,10 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 9/13/2020
+ * Last Update: 10/5/2020
  */
 
-static String version() { return "4.0.003" }
+static String version() { return "4.0.004" }
 
 import groovy.transform.Field
 import groovy.json.*
@@ -108,7 +108,7 @@ def NotificationPage() {
 				input (name: "alertSwitch", type: "capability.switch", title: "Select a switch to turn ON with Alert?", multiple: false, required: false, defaultValue: false, submitOnChange: true)
 				input (name:"alertSwitchOff", type: "bool", title: "Turn off switch when all Alerts expire?", required: false, defaultValue: false, submitOnChange: true)
 				input (name:"alertSwitchWeatherType", type: "bool", title: "Turn off switch if certain weather alert types expire?", required: false, defaultValue: false, submitOnChange: true)
-				if(alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", "enum", title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: state.eventTypes
+				if(alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", "enum", title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: (List)state.eventTypes
 			}
 		}
 	}
@@ -162,7 +162,7 @@ def AdvConfigPage() {
 		section(UIsupport("logo","")) {
 			paragraph UIsupport("header", " Advanced Alert Settings")
 			paragraph "Use with caution as below settings may cause undesired results.  Only select what you would like to refine in your alerts.  Reference <a href='https://www.weather.gov/documentation/services-web-api?prevfmt=application%2Fcap%2Bxml/default/get_alerts#/default/get_alerts' target='_blank'>Weather.gov API</a> and use the API response test button below to determine your desired results."
-			input "myWeatherAlert", "enum", title: "Filter results for specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: state.eventTypes
+			input "myWeatherAlert", "enum", title: "Filter results for specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: (List)state.eventTypes
 			input name: "whatAlertUrgency", type: "enum", title: "Poll only for a specific Alert Urgency: ", multiple: true, submitOnChange: true,
 				options: [
 					"immediate": "Immediate",
@@ -202,7 +202,7 @@ def RestrictionsPage() {
 
 			input "modeWeatherType", "bool", title: "Ignore restrictions for certain weather types?", required: false, defaultValue: false, submitOnChange: true
 
-			if(modeWeatherType) input name: "WeatherType", type: "enum", title: "Select weather type to ignore restrictions: ", required: true, multiple:true, submitOnChange: true, options: state.eventTypes
+			if(modeWeatherType) input name: "WeatherType", type: "enum", title: "Select weather type to ignore restrictions: ", required: true, multiple:true, submitOnChange: true, options: (List)state.eventTypes
 			paragraph "<hr>"
 			if(pushovertts) input "pushoverttsalways", "bool", title: "Enable Pushover notifications even when restricted?", required: false, defaultValue: false, submitOnChange: true
 		}
@@ -236,7 +236,7 @@ def SettingsPage() {
 			input "debug", "bool", title: "Debug alert configuration - if expired alerts are available, use those alerts? (only enable this with the test config option below)", required: false, defaultValue: false, submitOnChange: true
 			input "getAPI", "bool", title: "Test alert configuration and display weather.gov API response?", required: false, defaultValue: false, submitOnChange: true
 			if(getAPI) {
-				getAlertMsg()
+				getAlertMsgSync()
 				app.updateSetting("getAPI",[value:"false",type:"bool"])
 				app.updateSetting("debug",[value:"false",type:"bool"])
 
@@ -305,14 +305,8 @@ def SettingsPage() {
 // Main Application Routines
 def main() {
 	// Get the alert message
-	getAlertMsg()
-	if(ListofAlertsFLD && !(Boolean)atomicState.alertAnnounced) {
-		alertNow((String)ListofAlertsFLD[0].alertmsg, false)
-		if(repeatYes){
-			state.repeatmsg = (String)ListofAlertsFLD[0].alertmsg
-			repeatNow(true)
-		}else runIn(1,callRefreshTile)
-	} else if(logEnable) log.info "No new alerts.  Waiting ${whatPoll.toInteger()} minute(s) before next poll..."
+	issueGetAlertMsg()
+	return
 }
 
 void callRefreshTile(){
@@ -334,7 +328,7 @@ void alertNow(String alertmsg, Boolean repeatCheck){
 					input (name: "alertSwitch", type: "capability.switch", title: "Select a switch to turn ON with Alert?", multiple: false, required: false, defaultValue: false, submitOnChange: true)
 					input (name:"alertSwitchOff", type: "bool", title: "Turn off switch when all Alerts expire?", required: false, defaultValue: false, submitOnChange: true)
 					input (name:"alertSwitchWeatherType", type: "bool", title: "Turn off switch if certain weather alert types expire?", required: false, defaultValue: false, submitOnChange: true)
-					if(alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", "enum", title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: state.eventTypes
+					if(alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", "enum", title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: (List)state.eventTypes
 				}*/
 
 	if(alertmsg!=(String)null){
@@ -399,8 +393,17 @@ void repeatNow(Boolean newmsg=false){
 
 @Field static List ListofAlertsFLD=[]
 
-void getAlertMsg() {
-	Map result = getResponseURL()
+void issueGetAlertMsg() {
+	Map result = getResponseURL(true)
+	return
+}
+
+void getAlertMsgSync() {
+	Map result = getResponseURL(false)
+	finishAlertMsg(result)
+}
+
+void finishAlertMsg(Map result){
 	List ListofAlerts = []
 	if(result) {
 		Boolean IsnewList=false
@@ -454,7 +457,7 @@ void getAlertMsg() {
 					input (name: "alertSwitch", type: "capability.switch", title: "Select a switch to turn ON with Alert?", multiple: false, required: false, defaultValue: false, submitOnChange: true)
 					input (name:"alertSwitchOff", type: "bool", title: "Turn off switch when all Alerts expire?", required: false, defaultValue: false, submitOnChange: true)
 					input (name:"alertSwitchWeatherType", type: "bool", title: "Turn off switch if certain weather alert types expire?", required: false, defaultValue: false, submitOnChange: true)
-					if(alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", "enum", title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: state.eventTypes
+					if(alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", "enum", title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: (List)state.eventTypes
 				}*/
 	Boolean hadAlerts=false
 	if(ListofAlertsFLD) hadAlerts=true
@@ -789,7 +792,6 @@ void buildEventsList() {
 		state.eventTypes = (List)results.eventTypes
 		if(logEnable) log.debug "Acquired current events list from api.weather.gov"
 	}
-	schedule("00 00 01 ? * *", buildEventsList) // once a day 1:00 AM
 }
 
 // Device creation and status updhandlers
@@ -811,7 +813,7 @@ void cleanupChildDevices() {
 }
 
 // Application Support Routines
-Map getResponseURL() {
+Map getResponseURL(Boolean async=false) {
 	// Determine if custom coordinates have been selected
 	String latitude
 	String longitude
@@ -845,11 +847,46 @@ Map getResponseURL() {
 		contentType: "application/json"
 	]
 
-	try {
-		httpGet(requestParams)	{ response -> result = response.data }
+	if(!async){
+		try {
+			httpGet(requestParams)	{ response -> result = response.data }
+		}
+		catch (e) { if(logEnable) log.warn "The API Weather.gov did not return a response." }
+		return result
+	} else {
+		try {
+			asynchttpGet('ahttpreq', requestParams, [command: 'a'])
+			return [async:true]
+		}
+		catch (e) { if(logEnable) log.warn "Async http failed." }
+		return result
 	}
-	catch (e) { if(logEnable) log.warn "The API Weather.gov did not return a response." }
-	return result
+}
+
+void ahttpreq(resp, Map cbD){
+	def t0=resp.getHeaders()
+	Integer responseCode=resp.status
+	if(responseCode>=200 && responseCode<300 && resp.data){
+		def data=resp.data
+		if(data!=null && !(data instanceof Map)){
+			try{
+				data=(LinkedHashMap) new groovy.json.JsonSlurper().parseText(data)
+			}catch (all){
+				data=resp.data
+			}
+		}
+		finishAlertMsg(data)
+
+		if(ListofAlertsFLD && !(Boolean)atomicState.alertAnnounced) {
+			alertNow((String)ListofAlertsFLD[0].alertmsg, false)
+			if(repeatYes){
+				state.repeatmsg = (String)ListofAlertsFLD[0].alertmsg
+				repeatNow(true)
+			}else runIn(1,callRefreshTile)
+		} else if(logEnable) log.info "No new alerts.  Waiting ${whatPoll.toInteger()} minute(s) before next poll..."
+		return
+
+	} else if(logEnable) log.warn "The API Weather.gov did not return a response."
 }
 
 Map getResponseEvents() {
@@ -935,6 +972,10 @@ void initialize() {
 			runEvery5Minutes(main)
 			break
 	}
+	def random=new Random()
+	Integer random_int=random.nextInt(60)
+	Integer random_dint=random.nextInt(9)
+	schedule("${random_int} ${random_dint} 01 ? * *", buildEventsList) // once a day 1:00 AM
 	main()
 }
 
