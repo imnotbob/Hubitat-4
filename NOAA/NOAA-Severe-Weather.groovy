@@ -15,7 +15,7 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 10/5/2020
+ * Last Update: 11/5/2020
  */
 
 static String version() { return "4.0.004" }
@@ -701,7 +701,7 @@ void talkNow(String alertmsg, Boolean repeatCheck) {
 		try {
 			speechspeaker.initialize()
 			if(logEnable) log.debug "Initializing Speech Speaker"
-			//pauseExecution(2500)
+			pauseExecution(2500)
 		}
 		catch (any) { if(logEnable) log.debug "Speech device doesn't support initialize command" }
 
