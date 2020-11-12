@@ -15,7 +15,7 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 11/5/2020
+ * Last Update: 11/8/2020
  */
 
 static String version() { return "4.0.004" }
@@ -225,12 +225,12 @@ def SettingsPage() {
 			if(init) {
 				app.updateSetting("init",[value:"false",type:"bool"])
 				unschedule()
-				ListofAlertsFLD = []
-				state.repeat = false
-				state.repeatmsg = (String)null
-				if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow((String)null, false) // maybe Switch.off()
-				atomicState.alertAnnounced = false
-				log.warn "NOAA Weather Alerts application state has been reset."
+				//ListofAlertsFLD = []
+				//state.repeat = false
+				//state.repeatmsg = (String)null
+				//if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow((String)null, false) // maybe Switch.off()
+				//atomicState.alertAnnounced = false
+				log.warn "NOAA Weather Alerts application state is being reset."
 				initialize()
 			}
 			input "debug", "bool", title: "Debug alert configuration - if expired alerts are available, use those alerts? (only enable this with the test config option below)", required: false, defaultValue: false, submitOnChange: true
@@ -844,7 +844,8 @@ Map getResponseURL(Boolean async=false) {
 	Map requestParams =	[
 		uri: wxURI,
 		requestContentType: "application/json",
-		contentType: "application/json"
+		contentType: "application/json",
+		timeout: 20
 	]
 
 	if(!async){
@@ -895,7 +896,8 @@ Map getResponseEvents() {
 	Map requestParams =	[
 		uri: wxURI,
 		requestContentType: "application/json",
-		contentType: "application/json"
+		contentType: "application/json",
+		timeout: 20
 	]
 
 	try {
@@ -943,6 +945,10 @@ void initialize() {
 	createChildDevices()
 	state.repeat = false
 	state.repeatmsg = (String)null
+	ListofAlertsFLD = []
+	if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow((String)null, false) // maybe Switch.off()
+	atomicState.alertAnnounced = false
+	log.warn "NOAA Weather Alerts application state is reset."
 	runIn(1,callRefreshTile)
 	if(logEnable){
 		Integer myLog=15
