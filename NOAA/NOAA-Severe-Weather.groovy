@@ -15,10 +15,10 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 11/8/2020
+ * Last Update: 12/26/2020
  */
 
-static String version() { return "4.0.004" }
+static String version() { return "4.0.005" }
 
 import groovy.transform.Field
 import groovy.json.*
@@ -368,6 +368,7 @@ void repeatNow(Boolean newmsg=false){
 			if(newmsg){
 				state.rptCount = 0
 				state.rptNum = repeatTimes!=null ? repeatTimes.toInteger() : 1
+				state.repeat = true
 				if(logEnable) log.debug "Starting repeating alerts."
 			}else{
 				if((Boolean)state.repeat) {
@@ -377,7 +378,6 @@ void repeatNow(Boolean newmsg=false){
 				}
 			}
 			if((Boolean)state.repeat && (Integer)state.rptCount < (Integer)state.rptNum){
-				state.repeat = true
 				state.rptCount = (Integer)state.rptCount + 1
 				if(logEnable) log.debug "Scheduling repeating alert in ${repeatMinutes} minute(s).  This is ${state.rptCount}/${state.rptNum} repeated alert(s). Repeat State: ${state.repeat}"
 				runIn(repeatMinutes.toInteger()*60,repeatNow)
@@ -388,6 +388,7 @@ void repeatNow(Boolean newmsg=false){
 		//match state
 		state.repeat = false
 		state.repeatmsg = (String)null
+		runIn(1,callRefreshTile)
 	}
 }
 
@@ -463,19 +464,20 @@ void finishAlertMsg(Map result){
 	if(ListofAlertsFLD) hadAlerts=true
 	if(result!=null){ // deal with network outage; don't drop alerts.
 		ListofAlertsFLD = ListofAlerts
-		if(logEnable && ListofAlerts){
-			log.debug "ListofAlerts is ${ListofAlerts}"
-			state.ListofAlerts = ListofAlerts
-		}else state.remove('ListofAlerts')
-		if(hadAlerts && !ListofAlerts){
-			if(logEnable) log.debug "ending alerts"
-			if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow((String)null, false) // maybe Switch.off()
-			atomicState.alertAnnounced = false
-			state.repeat = false
-			state.repeatmsg = (String)null
+		state.ListofAlerts = ListofAlerts
+		if(logEnable && ListofAlerts) log.debug "ListofAlerts is ${ListofAlerts}"
+		else state.remove('ListofAlerts')
+	}
+	if(!ListofAlerts){
+		if(hadAlerts && logEnable) log.debug "ending alerts"
+		if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow((String)null, false) // maybe Switch.off()
+		atomicState.alertAnnounced = false
+		if((Boolean)state.repeat){
 			unschedule(repeatNow)
 			runIn(1,callRefreshTile)
 		}
+		state.repeat = false
+		state.repeatmsg = (String)null
 	}
 }
 
