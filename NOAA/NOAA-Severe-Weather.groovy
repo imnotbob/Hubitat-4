@@ -15,10 +15,10 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 12/26/2020
+ * Last Update: 1/22/2021
  */
 
-static String version() { return "4.0.005" }
+static String version() { return "4.0.006" }
 
 import groovy.transform.Field
 import groovy.json.*
@@ -306,7 +306,6 @@ def SettingsPage() {
 def main() {
 	// Get the alert message
 	issueGetAlertMsg()
-	return
 }
 
 void callRefreshTile(){
@@ -369,12 +368,13 @@ void repeatNow(Boolean newmsg=false){
 				state.rptCount = 0
 				state.rptNum = repeatTimes!=null ? repeatTimes.toInteger() : 1
 				state.repeat = true
+				doRefresh=false
 				if(logEnable) log.debug "Starting repeating alerts."
 			}else{
 				if((Boolean)state.repeat) {
 					if(logEnable) log.debug "Sending repeat message"
 					alertNow((String)state.repeatmsg, true)
-					runIn(1,callRefreshTile)
+					//runIn(1,callRefreshTile)
 				}
 			}
 			if((Boolean)state.repeat && (Integer)state.rptCount < (Integer)state.rptNum){
@@ -388,15 +388,15 @@ void repeatNow(Boolean newmsg=false){
 		//match state
 		state.repeat = false
 		state.repeatmsg = (String)null
-		runIn(1,callRefreshTile)
+		//runIn(1,callRefreshTile)
 	}
+	if(doRefresh) runIn(1,callRefreshTile)
 }
 
 @Field static List ListofAlertsFLD=[]
 
 void issueGetAlertMsg() {
 	Map result = getResponseURL(true)
-	return
 }
 
 void getAlertMsgSync() {
@@ -417,17 +417,18 @@ void finishAlertMsg(Map result){
 //			alertmsg=[]
 			def alertexpires
 
+			Map feat=(Map)result.features[i]
 			//alert expiration
-			if(result.features[i].properties.ends) alertexpires = result.features[i].properties.ends
-			else alertexpires = result.features[i].properties.expires
+			if(feat.properties.ends) alertexpires = feat.properties.ends
+			else alertexpires = feat.properties.expires
 
 			if(logEnable) log.debug "alertexpires ${alertexpires}       ${timestamp}"
 			//if alert has expired ignore alert
 			if((alertexpires.compareTo(timestamp)>=0) || settings.debug) {
 				//if specific weatheralerts is chosen
 				String t0= myWeatherAlert
-				if(t0==(String)null || t0=="") msg = buildAlertMap(result.features[i])
-				else if(t0.contains((String)result.features[i].properties.event)) msg = buildAlertMap(result.features[i])
+				if(t0==(String)null || t0=="") msg = buildAlertMap(feat)
+				else if(t0.contains((String)feat.properties.event)) msg = buildAlertMap(feat)
 
 				if(msg!=null){
 					Boolean isNewNotice=false
@@ -827,7 +828,7 @@ Map getResponseURL(Boolean async=false) {
 		longitude = "${location.longitude}".toString()
 	}
 
-	String wxURI = "https://api.weather.gov/alerts?point=${latitude}%2C${longitude}&status=actual&message_type=alert".toString()
+	String wxURI = "https://api.weather.gov/alerts?point=${latitude}%2C${longitude}&status=actual&message_type=alert,update".toString()
 	Map result = null
 
 	// Build out the API options
@@ -887,7 +888,6 @@ void ahttpreq(resp, Map cbD){
 				repeatNow(true)
 			}else runIn(1,callRefreshTile)
 		} else if(logEnable) log.info "No new alerts.  Waiting ${whatPoll.toInteger()} minute(s) before next poll..."
-		return
 
 	} else if(logEnable) log.warn "The API Weather.gov did not return a response."
 }
@@ -926,8 +926,7 @@ void checkState() {
 
 	if(repeatMinutes==null){
 		app.updateSetting("repeatMinutes",[value:15,type:"number"])
-		t0=15
-	}else t0=repeatMinutes.toInteger()
+	}
 
 	state.rptCount = 0
 	if(!(Boolean)state.repeat) state.repeatmsg = (String)null
