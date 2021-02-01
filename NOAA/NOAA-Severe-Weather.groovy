@@ -15,10 +15,10 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 1/22/2021
+ * Last Update: 1/31/2021
  */
 
-static String version() { return "4.0.006" }
+static String version() { return "4.0.007" }
 
 import groovy.transform.Field
 import groovy.json.*
@@ -229,7 +229,6 @@ def SettingsPage() {
 				//state.repeat = false
 				//state.repeatmsg = (String)null
 				//if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow((String)null, false) // maybe Switch.off()
-				//atomicState.alertAnnounced = false
 				log.warn "NOAA Weather Alerts application state is being reset."
 				initialize()
 			}
@@ -255,10 +254,10 @@ def SettingsPage() {
 
 					temp = "<hr><br>Current poll of Weather API: ${sdf.format(date)}<br/><br/>URI: <a href='${state.wxURI}' target=_blank>${state.wxURI}</a><br><br>AlertMSG Built based on configuration:<br><br>${customMsg}<br><br>"
 					temp += "<table border=0><tr colspan=2><td>Current Restriction Settings:</td></tr>"
-					temp += "<tr><td>Switch:</td><td>${restrictionSwitch}</td></tr>"
-					temp += "<tr><td>Mode:</td><td>${restrictionMode}</td></tr>"
-					temp += "<tr><td>Severity Override:</td><td>${overrideRestSeverity}</td></tr>"
-					temp += "<tr><td>Weather Type Override:</td><td>${overrideRestWeather}</td></tr></table></br>"
+					temp += "<tr><td>Switch:</td><td>${restrictionSwitch ? "Active for ${restrictbySwitch}" : "Inactive"}</td></tr>"
+					temp += "<tr><td>Mode:</td><td>${restrictionMode ? "Active for ${modes}" : "Inactive"}</td></tr>"
+					temp += "<tr><td>Severity Overrides Restrictions:</td><td>${overrideRestSeverity ? "Enabled for ${modeSeverity}" : "Disabled"}</td></tr>"
+					temp += "<tr><td>Weather Type Overrides Restrictions:</td><td>${overrideRestWeather ? "Enabled for ${WeatherType}" : "Disabled"}</td></tr></table></br>"
 					paragraph temp
 					for(y=0;y<ListofAlertsFLD.size();y++) {
 						String testalertmsg
@@ -268,12 +267,14 @@ def SettingsPage() {
 						//if((!restrictionSwitch || !restrictionMode) && (!modeSeverityYes || !modeWeatherType)) {
 							if(pushovertts) testalertmsg = "alert would be announced on TTS and PushOver device(s)."
 							else testalertmsg = "alert would be announced on TTS device(s)."
+							testalertmsg += " No restricitons active."
 						}else{
 							if (overrideRestSeverity || overrideRestWeather) {
-								if(pushovertts) testalertmsg = "alert would be announced on TTS and PushOver device(s) - override active"
-								else testalertmsg = "alert would be announced only on TTS device(s) - override active"
+								if(pushovertts) testalertmsg = "alert would be announced on TTS and PushOver device(s)"
+								else testalertmsg = "alert would be announced only on TTS device(s)"
+								testalertmsg += " - Restrictions override active."
 							}else{
-								if(pushovertts && pushoverttsalways) testalertmsg = "alert would be announced only on PushOver device(s).  Alert restricted with pushover always true."
+								if(pushovertts && pushoverttsalways) testalertmsg = "alert would be announced only on PushOver device(s).  Alert restricted with pushover always override."
 								else testalertmsg = "alert would not be announced.  Alert restricted."
 							}
 						}
@@ -313,13 +314,12 @@ void callRefreshTile(){
 	if(noaaTile) noaaTile.refreshTile()
 }
 
-void alertNow(String alertmsg, Boolean repeatCheck){
+void alertNow(Integer y, String alertmsg, Boolean repeatCheck){
 	// check restrictions based on Modes and Switches
-	atomicState.alertAnnounced = true
 	Boolean restrictionSwitch = (switchYes && restrictbySwitch != null && restrictbySwitch.currentState("switch").value == "on")
 	Boolean restrictionMode = (modesYes && modes != null && modes.contains(location.mode))
-	Boolean overrideRestSeverity = (modeSeverityYes && modeSeverity != null && ListofAlertsFLD && modeSeverity.contains(ListofAlertsFLD[0]?.alertseverity))
-	Boolean overrideRestWeather = (modeWeatherType && WeatherType != null && ListofAlertsFLD && WeatherType.contains(ListofAlertsFLD[0]?.alertevent))
+	Boolean overrideRestSeverity = (y!=null && modeSeverityYes && modeSeverity != null && ListofAlertsFLD && modeSeverity.contains(ListofAlertsFLD[y]?.alertseverity))
+	Boolean overrideRestWeather = (y!=null && modeWeatherType && WeatherType != null && ListofAlertsFLD && WeatherType.contains(ListofAlertsFLD[y]?.alertevent))
 	if(logEnable) log.debug "Restrictions on?  Modes: ${restrictionMode}, Switch: ${restrictionSwitch}, Severity Override: ${overrideRestSeverity}, Weather Type Override: ${overrideRestWeather}"
 /*
 				input (name: "UsealertSwitch", type: "bool", title: "Use a switch to turn ON with Alert?", required: false, defaultValue: false, submitOnChange: true)
@@ -330,30 +330,67 @@ void alertNow(String alertmsg, Boolean repeatCheck){
 					if(alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", "enum", title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: (List)state.eventTypes
 				}*/
 
+	Boolean alertWmatch = false
 	if(alertmsg!=(String)null){
 		// no restrictions
+		if(UsealertSwitch && alertSwitch && alertSwitchWeatherType && alertSwitchWeatherTypeWatch && ListofAlertsFLD && y!=null && 
+                              alertSwitchWeatherTypeWatch.contains(ListofAlertsFLD[y].alertevent) ) alertWmatch=true
+
 		if(!restrictionSwitch && !restrictionMode && !overrideRestSeverity && !overrideRestWeather) {//(!modeSeverityYes && !modeWeatherType)) {
 			log.info "Sending alert: ${alertmsg}"
 			pushNow(alertmsg, repeatCheck)
 			if(UsealertSwitch && alertSwitch) alertSwitch.on()
+			if(alertWmatch) state.alertWeatherMatch = ListofAlertsFLD[y].alertexpires
 			talkNow(alertmsg, repeatCheck)
 		}else{
 			if(overrideRestSeverity || overrideRestWeather) {
-				log.info "Sending alert (override): ${alertmsg}"
+				log.info "Sending alert (override active): ${alertmsg}"
 				pushNow(alertmsg, repeatCheck)
 				if(UsealertSwitch && alertSwitch) alertSwitch.on()
+				if(alertWmatch) state.alertWeatherMatch = ListofAlertsFLD[y].alertexpires
 				talkNow(alertmsg, repeatCheck)
 			}else{
 				if(pushoverttsalways) {
-					log.info "Restrictions are enabled but PushoverTTS enabled.  Waiting ${whatPoll.toInteger()} minutes before next poll..."
+					log.info "Sending alert to pushover, Restrictions are enabled but PushoverTTS always override enabled: ${alertmsg}"
 					pushNow(alertmsg, repeatCheck)
-				}else log.info "Restrictions are enabled.  Waiting ${whatPoll.toInteger()} minutes before next poll..."
+				}else log.info "Not sending alert, Restrictions are enabled."
 			}
 		}
 	}
+	walertCheck(alertmsg)
+	if(alertWmatch && state.alertWeatherMatch) {
+		Date dt = new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", state.alertWeatherMatch)
+		Long sec = (dt.getTime() - now()) / 1000
+		if(sec > 0L) {
+			runIn(sec, "walertCheck")
+			log.info "Scheduling check in $sec seconds:"
+		}
+	}
+}
+
+void walertCheck(String alertmsg="a"){
 	Boolean alertSwitchReset = false
-	if(UsealertSwitch && alertSwitch && alertSwitchWeatherType && alertSwitchWeatherTypeWatch && alertSwitchWeatherTypeWatch.contains(ListofAlertsFLD[0].alertevent) ) alertSwitchReset=true
-	if(alertmsg==(String)null && UsealertSwitch && alertSwitch && (alertSwitchOff || alertSwitchReset)) alertSwitch.off()
+	if(state.alertWeatherMatch) {
+		Boolean alertReset = true
+		for(y=0;y<ListofAlertsFLD.size();y++) {
+			if(UsealertSwitch && alertSwitch && alertSwitchWeatherType && alertSwitchWeatherTypeWatch && ListofAlertsFLD && y!=null && 
+                              alertSwitchWeatherTypeWatch.contains(ListofAlertsFLD[y].alertevent) ) alertReset=false
+		}
+		if(alertReset) { state.alertWeatherMatch=null; alertSwitchReset=true }
+	}
+	if((alertSwitchReset || alertmsg==(String)null) && UsealertSwitch && alertSwitch && (alertSwitchOff || alertSwitchReset)){
+		if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on"){
+			String amsg="turning off switch due to: "
+			if(alertSwitchReset) amsg += "weather alert ended"
+			else amsg+= "alerts ended"
+			log.info amsg
+			alertSwitch.off()
+		}
+	}
+	if((alertSwitchReset || alertmsg==(String)null)){
+		state.alertWeatherMatch=null
+		unschedule(walertCheck)
+	}
 }
 
 void repeatNow(Boolean newmsg=false){
@@ -373,7 +410,7 @@ void repeatNow(Boolean newmsg=false){
 			}else{
 				if((Boolean)state.repeat) {
 					if(logEnable) log.debug "Sending repeat message"
-					alertNow((String)state.repeatmsg, true)
+					alertNow(0, (String)state.repeatmsg, true)
 					//runIn(1,callRefreshTile)
 				}
 			}
@@ -393,7 +430,7 @@ void repeatNow(Boolean newmsg=false){
 	if(doRefresh) runIn(1,callRefreshTile)
 }
 
-@Field static List ListofAlertsFLD=[]
+@Field volatile static List<Map> ListofAlertsFLD=[]
 
 void issueGetAlertMsg() {
 	Map result = getResponseURL(true)
@@ -402,10 +439,16 @@ void issueGetAlertMsg() {
 void getAlertMsgSync() {
 	Map result = getResponseURL(false)
 	finishAlertMsg(result)
+	walertCheck()
 }
 
 void finishAlertMsg(Map result){
 	List ListofAlerts = []
+	List expireList = []
+
+	Boolean hadAlerts=false
+	if(ListofAlertsFLD.size()>0) hadAlerts=true
+
 	if(result) {
 		Boolean IsnewList=false
 		Date date = new Date()
@@ -424,21 +467,22 @@ void finishAlertMsg(Map result){
 
 			if(logEnable) log.debug "alertexpires ${alertexpires}       ${timestamp}"
 			//if alert has expired ignore alert
-			if((alertexpires.compareTo(timestamp)>=0) || settings.debug) {
-				//if specific weatheralerts is chosen
-				String t0= myWeatherAlert
-				if(t0==(String)null || t0=="") msg = buildAlertMap(feat)
-				else if(t0.contains((String)feat.properties.event)) msg = buildAlertMap(feat)
 
-				if(msg!=null){
+			//if specific weatheralerts is chosen
+			String t0= settings.myWeatherAlert
+			if(t0==(String)null || t0=="") msg = buildAlertMap(feat)
+			else if(t0.contains((String)feat.properties.event)) msg = buildAlertMap(feat)
+
+			if(msg!=null){
+                Boolean expired=false
+				if(!(alertexpires.compareTo(timestamp)>=0)) { expired=true }
+				if(!expired || settings.debug) {
 					Boolean isNewNotice=false
-					if(ListofAlertsFLD) {
-						//if(!(ListofAlertsFLD.alertid.contains(result.features[i].properties.id))) {
-						if(!(ListofAlertsFLD.alertid.contains(msg.alertid))) {
-							isNewNotice = true
-							IsnewList = true
-						}
-					} else{
+					if(ListofAlertsFLD.size() > 0) {
+						Map fndMsg = ListofAlertsFLD.find { ((String)it.alertid).contains((String)msg.alertid) }
+						if(fndMsg) { msg = fndMsg }
+						else isNewNotice = true
+					} else {
 						isNewNotice = true
 						IsnewList = true
 					}
@@ -446,12 +490,42 @@ void finishAlertMsg(Map result){
 						if(isNewNotice) log.debug "Valid ${msg.alertid} is new in ListofAlerts: ${IsnewList}"
 						else log.debug "Valid ${msg.alertid} exists in ListofAlerts"
 					}
+					if(isNewNotice){ msg.alertAnnounced = false }
+					msg.expired=expired
 					ListofAlerts << msg
+				} else {
+					msg.expired=expired
+					msg.alertAnnounced = true
+					expireList << msg
 				}
-			}
+			} // skipped the message due to filter
 		} //end of for statement
 
-		if(IsnewList) atomicState.alertAnnounced = false
+//ERS
+		ListofAlertsFLD = ListofAlerts
+		state.ListofAlerts = ListofAlerts
+		if(ListofAlerts) {
+			if(logEnable) log.debug "ListofAlerts is ${ListofAlerts}"
+		} else { state.remove('ListofAlerts'); state.remove('alertAnnounced') }
+
+		if(ListofAlertsFLD) {
+			for(y=0;y<ListofAlertsFLD.size();y++) {
+				Map msg = ListofAlertsFLD[y]
+				if(msg && !(Boolean)msg.expired && !(Boolean)msg.alertAnnounced) {
+					msg.alertAnnounced=true
+					ListofAlertsFLD[y] = msg
+					ListofAlertsFLD=ListofAlertsFLD
+					state.ListofAlerts = ListofAlertsFLD
+					alertNow(y, (String)msg.alertmsg, false)
+					if(repeatYes && y==0){
+						state.repeatmsg = (String)msg.alertmsg
+						repeatNow(true)
+					}else runIn(1,callRefreshTile)
+				} else if(msg && (Boolean)state.repeat && y==0) {
+					state.repeatmsg = (String)msg.alertmsg // update message incase alerts moved around
+				}
+			}
+		} else if(logEnable) log.info "No new alerts.  Waiting ${whatPoll.toInteger()} minute(s) before next poll..."
 	}
 /*
 				input (name: "UsealertSwitch", type: "bool", title: "Use a switch to turn ON with Alert?", required: false, defaultValue: false, submitOnChange: true)
@@ -461,24 +535,17 @@ void finishAlertMsg(Map result){
 					input (name:"alertSwitchWeatherType", type: "bool", title: "Turn off switch if certain weather alert types expire?", required: false, defaultValue: false, submitOnChange: true)
 					if(alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", "enum", title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: (List)state.eventTypes
 				}*/
-	Boolean hadAlerts=false
-	if(ListofAlertsFLD) hadAlerts=true
 	if(result!=null){ // deal with network outage; don't drop alerts.
-		ListofAlertsFLD = ListofAlerts
-		state.ListofAlerts = ListofAlerts
-		if(logEnable && ListofAlerts) log.debug "ListofAlerts is ${ListofAlerts}"
-		else state.remove('ListofAlerts')
-	}
-	if(!ListofAlerts){
-		if(hadAlerts && logEnable) log.debug "ending alerts"
-		if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow((String)null, false) // maybe Switch.off()
-		atomicState.alertAnnounced = false
-		if((Boolean)state.repeat){
-			unschedule(repeatNow)
-			runIn(1,callRefreshTile)
+		if(!ListofAlerts){
+			if(hadAlerts && logEnable) log.debug "ending alerts"
+			if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow(null, (String)null, false) // maybe Switch.off()
+			if((Boolean)state.repeat){
+				unschedule(repeatNow)
+				runIn(1,callRefreshTile)
+			}
+			state.repeat = false
+			state.repeatmsg = (String)null
 		}
-		state.repeat = false
-		state.repeatmsg = (String)null
 	}
 }
 
@@ -533,7 +600,7 @@ Map buildAlertMap(Map result) {
 	  catch (any) {}
 	alertmsg = alertmsg.replaceAll("\\s+", " ")
 
-	return [alertid:result.properties.id, alertseverity:result.properties.severity, alertarea:alertarea, alertsent:result.properties.sent, alerteffective:result.properties.effective, alertexpires:alertexpires, alertstatus:result.properties.status, alertmessagetype:result.properties.messageType, alertcategory:result.properties.category, alertcertainty:result.properties.certainty, alerturgency:result.properties.urgency, alertsendername:result.properties.senderName, alertheadline:alertheadline, alertdescription:alertdescription, alertinstruction:alertinstruction, alertevent:result.properties.event, alertmsg:alertmsg]
+	return [alertid:result.properties.id, alertseverity:result.properties.severity, alertarea:alertarea, alertsent:result.properties.sent, alerteffective:result.properties.effective, alertonset:result.properties.onset, alertexpires:alertexpires, alertstatus:result.properties.status, alertmessagetype:result.properties.messageType, alertcategory:result.properties.category, alertcertainty:result.properties.certainty, alerturgency:result.properties.urgency, alertsendername:result.properties.senderName, alertheadline:alertheadline, alertdescription:alertdescription, alertinstruction:alertinstruction, alertevent:result.properties.event, alertmsg:alertmsg]
 }
 
 static String alertFormatStates(String msg) {
@@ -634,8 +701,7 @@ void runtestAlert() {
 	if(logEnable) log.debug "Initiating a test alert."
 	String msg=buildTestAlert()
 	state.repeatmsg=msg
-	atomicState.alertAnnounced = false
-	alertNow(msg, false)
+	alertNow(null, msg, false)
 	if(repeatYes){
 		if(logEnable) log.debug "Initiating a repeat process (ends in 5 minutes) for test alert."
 		state.repeat=false
@@ -648,8 +714,7 @@ void runtestAlert() {
 void endTest(){
 	if(logEnable) log.debug "Ending repeat for test alert."
 	atomicState.testmsg = false
-	if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow((String)null, false) // maybe Switch.off()
-	atomicState.alertAnnounced = false
+	if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow(null, (String)null, false) // maybe Switch.off()
 	state.repeat = false
 	state.repeatmsg = (String)null
 	unschedule(repeatNow)
@@ -779,7 +844,9 @@ List getTile() {
 		}else{
 			if(ListofAlertsFLD) {
 				for(x=0;x<ListofAlertsFLD.size();x++) {
-					msg << [alertmsg:ListofAlertsFLD[x].alertmsg]
+					if(msg.toString().length() < 100000) {
+						if(!(Boolean)ListofAlertsFLD[x].expired) msg << [alertmsg:ListofAlertsFLD[x].alertmsg]
+					}
 				}
 			}
 		}
@@ -868,6 +935,7 @@ Map getResponseURL(Boolean async=false) {
 }
 
 void ahttpreq(resp, Map cbD){
+    try {
 	def t0=resp.getHeaders()
 	Integer responseCode=resp.status
 	if(responseCode>=200 && responseCode<300 && resp.data){
@@ -881,15 +949,12 @@ void ahttpreq(resp, Map cbD){
 		}
 		finishAlertMsg(data)
 
-		if(ListofAlertsFLD && !(Boolean)atomicState.alertAnnounced) {
-			alertNow((String)ListofAlertsFLD[0].alertmsg, false)
-			if(repeatYes){
-				state.repeatmsg = (String)ListofAlertsFLD[0].alertmsg
-				repeatNow(true)
-			}else runIn(1,callRefreshTile)
-		} else if(logEnable) log.info "No new alerts.  Waiting ${whatPoll.toInteger()} minute(s) before next poll..."
 
 	} else if(logEnable) log.warn "The API Weather.gov did not return a response."
+    } catch(e) {
+		if(logEnable) log.warn "The API Weather.gov did not return a response. (exception), $e"
+    }
+	walertCheck()
 }
 
 Map getResponseEvents() {
@@ -947,8 +1012,7 @@ void initialize() {
 	state.repeat = false
 	state.repeatmsg = (String)null
 	ListofAlertsFLD = []
-	if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow((String)null, false) // maybe Switch.off()
-	atomicState.alertAnnounced = false
+	if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow(null, (String)null, false) // maybe Switch.off()
 	log.warn "NOAA Weather Alerts application state is reset."
 	runIn(1,callRefreshTile)
 	if(logEnable){

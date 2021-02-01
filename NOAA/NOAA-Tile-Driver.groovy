@@ -16,7 +16,7 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 9/13/2020
+ * Last Update: 1/31/2021
  */
 
 metadata {
@@ -65,7 +65,7 @@ void logsOff(){
 
 void refreshTile() {
 		if(logEnable) log.info "Requesting current weather alert from NOAA App."
-		List noaaData = []
+		List<Map> noaaData = []
 		try { noaaData = (List)parent.getTile() }
 		catch (e) {}
 		if(!noaaData) { 
@@ -74,7 +74,7 @@ void refreshTile() {
 		}
 		else {
 			if(logEnable) log.info "Received the from NOAA Alerts: ${noaaData}"
-			if(logEnable) log.info "Displaying ${noaaData.size} alerts on the dashboard."
+			if(logEnable) log.info "Displaying ${noaaData.size()} alerts on the dashboard."
 			List fullmsg = []
 			for(x=0;x<noaaData.size();x++) {
 				m = noaaData[x].alertmsg =~ /(.|[\r\n]){1,378}\W/
