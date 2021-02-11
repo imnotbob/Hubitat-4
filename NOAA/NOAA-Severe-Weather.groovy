@@ -15,10 +15,10 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 1/31/2021
+ * Last Update: 2/11/2021
  */
 
-static String version() { return "4.0.007" }
+static String version() { return "4.0.008" }
 
 import groovy.transform.Field
 import groovy.json.*
@@ -110,6 +110,8 @@ def NotificationPage() {
 				input (name:"alertSwitchWeatherType", type: "bool", title: "Turn off switch if certain weather alert types expire?", required: false, defaultValue: false, submitOnChange: true)
 				if(alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", "enum", title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: (List)state.eventTypes
 			}
+			// Disable Tile updates
+			input (name: "disableTile", type: "bool", defaultValue: false, title: "Disable updates of Tile Device to display alerts?", description: "Disable tile device?", submitOnChange: true)
 		}
 	}
 }
@@ -837,22 +839,23 @@ void pushNow(String alertmsg, Boolean repeatCheck) {
 
 List getTile() {
 	List msg = []
-	if(logEnable) log.info "Creating data information for tile display."
-	try {
-		if((Boolean)atomicState.testmsg) {
-			msg << [alertmsg:(String)state.repeatmsg]
-		}else{
-			if(ListofAlertsFLD) {
-				for(x=0;x<ListofAlertsFLD.size();x++) {
-					if(msg.toString().length() < 100000) {
-						if(!(Boolean)ListofAlertsFLD[x].expired) msg << [alertmsg:ListofAlertsFLD[x].alertmsg]
+	if(!(Boolean)settings.disableTile){
+		if(logEnable) log.info "Creating data information for tile display."
+		try {
+			if((Boolean)atomicState.testmsg) {
+				msg << [alertmsg:(String)state.repeatmsg]
+			}else{
+				if(ListofAlertsFLD) {
+					for(x=0;x<ListofAlertsFLD.size();x++) {
+						if(msg.toString().length() < 100000) {
+							if(!(Boolean)ListofAlertsFLD[x].expired) msg << [alertmsg:ListofAlertsFLD[x].alertmsg]
+						}
 					}
 				}
 			}
 		}
-		return msg
-	}
-	catch (e) {}
+		catch (e) {}
+	} else if(msg && logEnable) log.debug "Tile display is disabled."
 	return msg
 }
 
