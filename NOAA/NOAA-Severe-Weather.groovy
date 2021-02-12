@@ -15,10 +15,10 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 2/11/2021
+ * Last Update: 2/12/2021
  */
 
-static String version() { return "4.0.008" }
+static String version() { return "4.0.009" }
 
 import groovy.transform.Field
 import groovy.json.*
@@ -227,10 +227,6 @@ def SettingsPage() {
 			if(init) {
 				app.updateSetting("init",[value:"false",type:"bool"])
 				unschedule()
-				//ListofAlertsFLD = []
-				//state.repeat = false
-				//state.repeatmsg = (String)null
-				//if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow((String)null, false) // maybe Switch.off()
 				log.warn "NOAA Weather Alerts application state is being reset."
 				initialize()
 			}
@@ -241,6 +237,7 @@ def SettingsPage() {
 				app.updateSetting("getAPI",[value:"false",type:"bool"])
 				app.updateSetting("debug",[value:"false",type:"bool"])
 
+				if(!ListofAlertsFLD && (List)state.ListofAlerts) ListofAlertsFLD = state.ListofAlerts // on hub restart or code reload
 				if(ListofAlertsFLD) {
 					Boolean restrictionSwitch = (switchYes && restrictbySwitch != null && restrictbySwitch.currentState("switch").value == "on")
 					Boolean restrictionMode = (modesYes && modes != null && modes.contains(location.mode))
@@ -317,20 +314,14 @@ void callRefreshTile(){
 }
 
 void alertNow(Integer y, String alertmsg, Boolean repeatCheck){
+	if(!ListofAlertsFLD && (List)state.ListofAlerts) ListofAlertsFLD = state.ListofAlerts // on hub restart or code reload
+
 	// check restrictions based on Modes and Switches
 	Boolean restrictionSwitch = (switchYes && restrictbySwitch != null && restrictbySwitch.currentState("switch").value == "on")
 	Boolean restrictionMode = (modesYes && modes != null && modes.contains(location.mode))
 	Boolean overrideRestSeverity = (y!=null && modeSeverityYes && modeSeverity != null && ListofAlertsFLD && modeSeverity.contains(ListofAlertsFLD[y]?.alertseverity))
 	Boolean overrideRestWeather = (y!=null && modeWeatherType && WeatherType != null && ListofAlertsFLD && WeatherType.contains(ListofAlertsFLD[y]?.alertevent))
 	if(logEnable) log.debug "Restrictions on?  Modes: ${restrictionMode}, Switch: ${restrictionSwitch}, Severity Override: ${overrideRestSeverity}, Weather Type Override: ${overrideRestWeather}"
-/*
-				input (name: "UsealertSwitch", type: "bool", title: "Use a switch to turn ON with Alert?", required: false, defaultValue: false, submitOnChange: true)
-				if(UsealertSwitch) {
-					input (name: "alertSwitch", type: "capability.switch", title: "Select a switch to turn ON with Alert?", multiple: false, required: false, defaultValue: false, submitOnChange: true)
-					input (name:"alertSwitchOff", type: "bool", title: "Turn off switch when all Alerts expire?", required: false, defaultValue: false, submitOnChange: true)
-					input (name:"alertSwitchWeatherType", type: "bool", title: "Turn off switch if certain weather alert types expire?", required: false, defaultValue: false, submitOnChange: true)
-					if(alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", "enum", title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: (List)state.eventTypes
-				}*/
 
 	Boolean alertWmatch = false
 	if(alertmsg!=(String)null){
@@ -371,6 +362,8 @@ void alertNow(Integer y, String alertmsg, Boolean repeatCheck){
 }
 
 void walertCheck(String alertmsg="a"){
+	if(!ListofAlertsFLD && (List)state.ListofAlerts) ListofAlertsFLD = state.ListofAlerts // on hub restart or code reload
+
 	Boolean alertSwitchReset = false
 	if(state.alertWeatherMatch) {
 		Boolean alertReset = true
@@ -448,6 +441,8 @@ void finishAlertMsg(Map result){
 	List ListofAlerts = []
 	List expireList = []
 
+	if(!ListofAlertsFLD && (List)state.ListofAlerts) ListofAlertsFLD = state.ListofAlerts // on hub restart or code reload
+
 	Boolean hadAlerts=false
 	if(ListofAlertsFLD.size()>0) hadAlerts=true
 
@@ -476,7 +471,7 @@ void finishAlertMsg(Map result){
 			else if(t0.contains((String)feat.properties.event)) msg = buildAlertMap(feat)
 
 			if(msg!=null){
-                Boolean expired=false
+				Boolean expired=false
 				if(!(alertexpires.compareTo(timestamp)>=0)) { expired=true }
 				if(!expired || settings.debug) {
 					Boolean isNewNotice=false
@@ -511,32 +506,36 @@ void finishAlertMsg(Map result){
 		} else { state.remove('ListofAlerts'); state.remove('alertAnnounced') }
 
 		if(ListofAlertsFLD) {
+			Boolean fixedRepeat=false
+			Boolean schedTile=false
 			for(y=0;y<ListofAlertsFLD.size();y++) {
 				Map msg = ListofAlertsFLD[y]
-				if(msg && !(Boolean)msg.expired && !(Boolean)msg.alertAnnounced) {
-					msg.alertAnnounced=true
-					ListofAlertsFLD[y] = msg
-					ListofAlertsFLD=ListofAlertsFLD
-					state.ListofAlerts = ListofAlertsFLD
-					alertNow(y, (String)msg.alertmsg, false)
-					if(repeatYes && y==0){
-						state.repeatmsg = (String)msg.alertmsg
-						repeatNow(true)
-					}else runIn(1,callRefreshTile)
-				} else if(msg && (Boolean)state.repeat && y==0) {
-					state.repeatmsg = (String)msg.alertmsg // update message incase alerts moved around
+				if(msg && !(Boolean)msg.expired) {
+					if(!(Boolean)msg.alertAnnounced) {
+						msg.alertAnnounced=true
+						ListofAlertsFLD[y] = msg
+						ListofAlertsFLD=ListofAlertsFLD
+						state.ListofAlerts = ListofAlertsFLD
+						alertNow(y, (String)msg.alertmsg, false)
+						if(repeatYes && !fixedRepeat){
+							fixedRepeat=true
+							state.repeatmsg = (String)msg.alertmsg
+							repeatNow(true)
+						}
+					}
+					if(repeatYes && !fixedRepeat){
+						fixedRepeat=true
+						state.repeatmsg = (String)msg.alertmsg // in case messages moved around in order
+					}
+					if(!schedTile) {
+						schedTile=true
+						runIn(1,callRefreshTile)
+					}
 				}
 			}
 		} else if(logEnable) log.info "No new alerts.  Waiting ${whatPoll.toInteger()} minute(s) before next poll..."
 	}
-/*
-				input (name: "UsealertSwitch", type: "bool", title: "Use a switch to turn ON with Alert?", required: false, defaultValue: false, submitOnChange: true)
-				if(UsealertSwitch) {
-					input (name: "alertSwitch", type: "capability.switch", title: "Select a switch to turn ON with Alert?", multiple: false, required: false, defaultValue: false, submitOnChange: true)
-					input (name:"alertSwitchOff", type: "bool", title: "Turn off switch when all Alerts expire?", required: false, defaultValue: false, submitOnChange: true)
-					input (name:"alertSwitchWeatherType", type: "bool", title: "Turn off switch if certain weather alert types expire?", required: false, defaultValue: false, submitOnChange: true)
-					if(alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", "enum", title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: (List)state.eventTypes
-				}*/
+
 	if(result!=null){ // deal with network outage; don't drop alerts.
 		if(!ListofAlerts){
 			if(hadAlerts && logEnable) log.debug "ending alerts"
@@ -838,6 +837,7 @@ void pushNow(String alertmsg, Boolean repeatCheck) {
 
 
 List getTile() {
+	if(!ListofAlertsFLD && (List)state.ListofAlerts) ListofAlertsFLD = state.ListofAlerts // on hub restart or code reload
 	List msg = []
 	if(!(Boolean)settings.disableTile){
 		if(logEnable) log.info "Creating data information for tile display."
@@ -1015,6 +1015,7 @@ void initialize() {
 	state.repeat = false
 	state.repeatmsg = (String)null
 	ListofAlertsFLD = []
+	state.ListofAlerts = ListofAlerts
 	if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow(null, (String)null, false) // maybe Switch.off()
 	log.warn "NOAA Weather Alerts application state is reset."
 	runIn(1,callRefreshTile)
