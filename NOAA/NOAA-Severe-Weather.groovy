@@ -855,7 +855,7 @@ List getTile() {
 			}
 		}
 		catch (e) {}
-	} else if(msg && logEnable) log.debug "Tile display is disabled."
+	} else if(!msg && logEnable) log.debug "Tile display is disabled."
 	return msg
 }
 

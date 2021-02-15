@@ -64,35 +64,34 @@ void logsOff(){
 
 
 void refreshTile() {
-		if(logEnable) log.info "Requesting current weather alert from NOAA App."
-		List<Map> noaaData = []
-		try { noaaData = (List)parent.getTile() }
-		catch (e) {}
-		if(!noaaData) { 
-			sendEvent(name: "Alerts", value: "No weather alerts to report.", displayed: true) 
-			//runIn(60, refreshTile)
-		}
-		else {
-			if(logEnable) log.info "Received the from NOAA Alerts: ${noaaData}"
-			if(logEnable) log.info "Displaying ${noaaData.size()} alerts on the dashboard."
-			List fullmsg = []
-			for(x=0;x<noaaData.size();x++) {
-				m = noaaData[x].alertmsg =~ /(.|[\r\n]){1,378}\W/
-				fullmsg = []
-				while (m.find()) {
-					fullmsg << m.group()
-				}
-				for(i=0;i<fullmsg.size();i++) {
-					String noaaTile
-					noaaTile = "<table style='position:relative;top:-10px;left:10px;border-collapse:collapse;width:97%'><tr style='border-bottom:medium solid #FFFFFF;'><td valign='bottom' style='text-align:left;width:50%;border-bottom:medium solid #FFFFFF;height:13px'><font style='font-size:12px;'>"
-					noaaTile += "Alert: ${x+1}/${noaaData.size()}"
-					noaaTile += "</font></td><td valign='bottom' style='text-align:right;border-bottom:medium solid #FFFFFF;width:50%;height:13px'><font style='font-size:12px;'>Page: ${i+1}/${fullmsg.size()}</font></td></tr>"
-					noaaTile += "<tr><td colspan=2 valign='top' style='line-height:normal;width:90%;height:100px;text-align:left;border-top-style:none;border-top-width:medium;'><font style='font-size:13px'>${fullmsg[i]}"
-					noaaTile += "</font></td></tr></table>"
-					sendEvent(name: "Alerts", value: noaaTile, displayed: true)	  
-					pauseExecution(8000)
-				}
+	if(logEnable) log.info "Requesting current weather alert from NOAA App."
+	List<Map> noaaData = []
+	try { noaaData = (List)parent.getTile() }
+	catch (e) {}
+	if(!noaaData) { 
+		sendEvent(name: "Alerts", value: "No weather alerts to report.", displayed: true) 
+		//runIn(60, refreshTile)
+	} else {
+		if(logEnable) log.info "Received the from NOAA Alerts: ${noaaData}"
+		if(logEnable) log.info "Displaying ${noaaData.size()} alerts on the dashboard."
+		List fullmsg = []
+		for(x=0;x<noaaData.size();x++) {
+			m = noaaData[x].alertmsg =~ /(.|[\r\n]){1,378}\W/
+			fullmsg = []
+			while (m.find()) {
+				fullmsg << m.group()
 			}
-			runIn(15, refreshTile)
+			for(i=0;i<fullmsg.size();i++) {
+				String noaaTile
+				noaaTile = "<table style='position:relative;top:-10px;left:10px;border-collapse:collapse;width:97%'><tr style='border-bottom:medium solid #FFFFFF;'><td valign='bottom' style='text-align:left;width:50%;border-bottom:medium solid #FFFFFF;height:13px'><font style='font-size:12px;'>"
+				noaaTile += "Alert: ${x+1}/${noaaData.size()}"
+				noaaTile += "</font></td><td valign='bottom' style='text-align:right;border-bottom:medium solid #FFFFFF;width:50%;height:13px'><font style='font-size:12px;'>Page: ${i+1}/${fullmsg.size()}</font></td></tr>"
+				noaaTile += "<tr><td colspan=2 valign='top' style='line-height:normal;width:90%;height:100px;text-align:left;border-top-style:none;border-top-width:medium;'><font style='font-size:13px'>${fullmsg[i]}"
+				noaaTile += "</font></td></tr></table>"
+				sendEvent(name: "Alerts", value: noaaTile, displayed: true)	  
+				pauseExecution(8000)
+			}
 		}
+		runIn(15, refreshTile)
+	}
 }
