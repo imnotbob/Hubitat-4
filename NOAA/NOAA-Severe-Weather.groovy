@@ -15,10 +15,10 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 2/12/2021
+ * Last Update: 2/20/2021
  */
 
-static String version() { return "4.0.009" }
+static String version() { return "4.0.010" }
 
 import groovy.transform.Field
 import groovy.json.*
@@ -123,10 +123,11 @@ def ConfigPage() {
 			paragraph "Configure NOAA to look for specific alert severities, how often to poll for weather information, repeat alerts, use custom coordinates and customize the alert message sent to notification device(s)."
 			input name: "whatAlertSeverity", type: "enum", title: "Weather Severity(s) to gather in poll: ",
 				options: [
+					"unknown": "Unknown",
 					"minor": "Minor",
 					"moderate": "Moderate",
 					"severe": "Severe",
-					"extreme": "Extreme"], required: true, multiple: true, defaultValue: "Severe"
+					"extreme": "Extreme"], required: true, multiple: true, defaultValue: "severe"
 			input name: "whatPoll", type: "enum", title: "Poll Frequency: ", options: ["1": "1 Minute", "5": "5 Minutes", "10": "10 Minutes", "15": "15 Minutes"], required: true, multiple: false, defaultValue: "5"
 			input "repeatYes", "bool", title: "Repeat Alert?", require: false, defaultValue: false, submitOnChange: true
 			if(repeatYes) {
@@ -237,13 +238,15 @@ def SettingsPage() {
 				app.updateSetting("getAPI",[value:"false",type:"bool"])
 				app.updateSetting("debug",[value:"false",type:"bool"])
 
-				if(!ListofAlertsFLD && (List)state.ListofAlerts) ListofAlertsFLD = state.ListofAlerts // on hub restart or code reload
-				if(ListofAlertsFLD) {
+				String myId=app.getId()
+				if(!ListofAlertsFLD[myId] && (List)state.ListofAlerts) ListofAlertsFLD[myId] = state.ListofAlerts // on hub restart or code reload
+				List<Map>mListofAlertsFLD = ListofAlertsFLD[myId]
+				if(mListofAlertsFLD) {
 					Boolean restrictionSwitch = (switchYes && restrictbySwitch != null && restrictbySwitch.currentState("switch").value == "on")
 					Boolean restrictionMode = (modesYes && modes != null && modes.contains(location.mode))
 					Boolean overrideRestSeverity = (modeSeverityYes && modeSeverity != null)
 					Boolean overrideRestWeather = (modeWeatherType && WeatherType != null)
-					//Boolean alertSwitchReset = (alertSwitchWeatherType && alertSwitchWeatherTypeWatch != null && alertSwitchWeatherTypeWatch.contains(ListofAlertsFLD[0].alertevent))
+					//Boolean alertSwitchReset = (alertSwitchWeatherType && alertSwitchWeatherTypeWatch != null && alertSwitchWeatherTypeWatch.contains(mListofAlertsFLD[0].alertevent))
 					//def testresult = (!(result || result2) || result3 || result4) ? true : false
 					Date date = new Date()
 					SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy h:mm a")
@@ -258,10 +261,10 @@ def SettingsPage() {
 					temp += "<tr><td>Severity Overrides Restrictions:</td><td>${overrideRestSeverity ? "Enabled for ${modeSeverity}" : "Disabled"}</td></tr>"
 					temp += "<tr><td>Weather Type Overrides Restrictions:</td><td>${overrideRestWeather ? "Enabled for ${WeatherType}" : "Disabled"}</td></tr></table></br>"
 					paragraph temp
-					for(y=0;y<ListofAlertsFLD.size();y++) {
+					for(y=0;y<mListofAlertsFLD.size();y++) {
 						String testalertmsg
-						overrideRestSeverity = (modeSeverityYes && modeSeverity != null && modeSeverity.contains(ListofAlertsFLD[y].alertseverity))
-						overrideRestWeather = (modeWeatherType && WeatherType != null && WeatherType.contains(ListofAlertsFLD[y].alertevent))
+						overrideRestSeverity = (modeSeverityYes && modeSeverity != null && modeSeverity.contains(mListofAlertsFLD[y].alertseverity))
+						overrideRestWeather = (modeWeatherType && WeatherType != null && WeatherType.contains(mListofAlertsFLD[y].alertevent))
 						if(!restrictionSwitch && !restrictionMode && !overrideRestSeverity && !overrideRestWeather) {
 						//if((!restrictionSwitch || !restrictionMode) && (!modeSeverityYes || !modeWeatherType)) {
 							if(pushovertts) testalertmsg = "alert would be announced on TTS and PushOver device(s)."
@@ -277,22 +280,22 @@ def SettingsPage() {
 								else testalertmsg = "alert would not be announced.  Alert restricted."
 							}
 						}
-						testConfig +="<table border=1px><tr><td colspan='2'>Alert ${y+1}/${ListofAlertsFLD.size()} - ${testalertmsg}</td></tr>"
-						testConfig += "<tr><td>Field Name</td><td>Value</td></tr><tr><td>Severity</td><td>${ListofAlertsFLD[y].alertseverity}</td></tr>"
-						testConfig += "<tr><td>Area</td><td>${ListofAlertsFLD[y].alertarea}</td></tr>"
-						testConfig += "<tr><td>Sent</td><td>${ListofAlertsFLD[y].alertsent}</td></tr>"
-						testConfig += "<tr><td>Effective</td><td>${ListofAlertsFLD[y].alerteffective}</td></tr>"
-						testConfig += "<tr><td>Expires</td><td>${ListofAlertsFLD[y].alertexpires}</td></tr>"
-						testConfig += "<tr><td>Status</td><td>${ListofAlertsFLD[y].alertstatus}</td></tr>"
-						testConfig += "<tr><td>Message Type</td><td>${ListofAlertsFLD[y].alertmessagetype}</td></tr>"
-						testConfig += "<tr><td>Category</td><td>${ListofAlertsFLD[y].alertcategory}</td></tr>"
-						testConfig += "<tr><td>Certainty</td><td>${ListofAlertsFLD[y].alertcertainty}</td></tr>"
-						testConfig += "<tr><td>Urgency</td><td>${ListofAlertsFLD[y].alerturgency}</td></tr>"
-						testConfig += "<tr><td>Sender Name</td><td>${ListofAlertsFLD[y].alertsendername}</td></tr>"
-						testConfig += "<tr><td>Event Type</td><td>${ListofAlertsFLD[y].alertevent}</td></tr>"
-						testConfig += "<tr><td>Headline</td><td>${ListofAlertsFLD[y].alertheadline}</td></tr>"
-						testConfig += "<tr><td>Description</td><td>${ListofAlertsFLD[y].alertdescription}</td></tr>"
-						testConfig += "<tr><td>Instruction</td><td>${ListofAlertsFLD[y].alertinstruction}</td></tr></table>"
+						testConfig +="<table border=1px><tr><td colspan='2'>Alert ${y+1}/${mListofAlertsFLD.size()} - ${testalertmsg}</td></tr>"
+						testConfig += "<tr><td>Field Name</td><td>Value</td></tr><tr><td>Severity</td><td>${mListofAlertsFLD[y].alertseverity}</td></tr>"
+						testConfig += "<tr><td>Area</td><td>${mListofAlertsFLD[y].alertarea}</td></tr>"
+						testConfig += "<tr><td>Sent</td><td>${mListofAlertsFLD[y].alertsent}</td></tr>"
+						testConfig += "<tr><td>Effective</td><td>${mListofAlertsFLD[y].alerteffective}</td></tr>"
+						testConfig += "<tr><td>Expires</td><td>${mListofAlertsFLD[y].alertexpires}</td></tr>"
+						testConfig += "<tr><td>Status</td><td>${mListofAlertsFLD[y].alertstatus}</td></tr>"
+						testConfig += "<tr><td>Message Type</td><td>${mListofAlertsFLD[y].alertmessagetype}</td></tr>"
+						testConfig += "<tr><td>Category</td><td>${mListofAlertsFLD[y].alertcategory}</td></tr>"
+						testConfig += "<tr><td>Certainty</td><td>${mListofAlertsFLD[y].alertcertainty}</td></tr>"
+						testConfig += "<tr><td>Urgency</td><td>${mListofAlertsFLD[y].alerturgency}</td></tr>"
+						testConfig += "<tr><td>Sender Name</td><td>${mListofAlertsFLD[y].alertsendername}</td></tr>"
+						testConfig += "<tr><td>Event Type</td><td>${mListofAlertsFLD[y].alertevent}</td></tr>"
+						testConfig += "<tr><td>Headline</td><td>${mListofAlertsFLD[y].alertheadline}</td></tr>"
+						testConfig += "<tr><td>Description</td><td>${mListofAlertsFLD[y].alertdescription}</td></tr>"
+						testConfig += "<tr><td>Instruction</td><td>${mListofAlertsFLD[y].alertinstruction}</td></tr></table>"
 					}
 					paragraph testConfig
 				}
@@ -314,33 +317,35 @@ void callRefreshTile(){
 }
 
 void alertNow(Integer y, String alertmsg, Boolean repeatCheck){
-	if(!ListofAlertsFLD && (List)state.ListofAlerts) ListofAlertsFLD = state.ListofAlerts // on hub restart or code reload
+	String myId=app.getId()
+	if(!ListofAlertsFLD[myId] && (List)state.ListofAlerts) ListofAlertsFLD[myId] = state.ListofAlerts // on hub restart or code reload
+	List<Map> mListofAlertsFLD = ListofAlertsFLD[myId]
 
 	// check restrictions based on Modes and Switches
 	Boolean restrictionSwitch = (switchYes && restrictbySwitch != null && restrictbySwitch.currentState("switch").value == "on")
 	Boolean restrictionMode = (modesYes && modes != null && modes.contains(location.mode))
-	Boolean overrideRestSeverity = (y!=null && modeSeverityYes && modeSeverity != null && ListofAlertsFLD && modeSeverity.contains(ListofAlertsFLD[y]?.alertseverity))
-	Boolean overrideRestWeather = (y!=null && modeWeatherType && WeatherType != null && ListofAlertsFLD && WeatherType.contains(ListofAlertsFLD[y]?.alertevent))
+	Boolean overrideRestSeverity = (y!=null && modeSeverityYes && modeSeverity != null && mListofAlertsFLD && modeSeverity.contains(mListofAlertsFLD[y]?.alertseverity))
+	Boolean overrideRestWeather = (y!=null && modeWeatherType && WeatherType != null && mListofAlertsFLD && WeatherType.contains(mListofAlertsFLD[y]?.alertevent))
 	if(logEnable) log.debug "Restrictions on?  Modes: ${restrictionMode}, Switch: ${restrictionSwitch}, Severity Override: ${overrideRestSeverity}, Weather Type Override: ${overrideRestWeather}"
 
 	Boolean alertWmatch = false
 	if(alertmsg!=(String)null){
 		// no restrictions
-		if(UsealertSwitch && alertSwitch && alertSwitchWeatherType && alertSwitchWeatherTypeWatch && ListofAlertsFLD && y!=null && 
-                              alertSwitchWeatherTypeWatch.contains(ListofAlertsFLD[y].alertevent) ) alertWmatch=true
+		if(UsealertSwitch && alertSwitch && alertSwitchWeatherType && alertSwitchWeatherTypeWatch && mListofAlertsFLD && y!=null && 
+                              alertSwitchWeatherTypeWatch.contains(mListofAlertsFLD[y].alertevent) ) alertWmatch=true
 
 		if(!restrictionSwitch && !restrictionMode && !overrideRestSeverity && !overrideRestWeather) {//(!modeSeverityYes && !modeWeatherType)) {
 			log.info "Sending alert: ${alertmsg}"
 			pushNow(alertmsg, repeatCheck)
 			if(UsealertSwitch && alertSwitch) alertSwitch.on()
-			if(alertWmatch) state.alertWeatherMatch = ListofAlertsFLD[y].alertexpires
+			if(alertWmatch) state.alertWeatherMatch = mListofAlertsFLD[y].alertexpires
 			talkNow(alertmsg, repeatCheck)
 		}else{
 			if(overrideRestSeverity || overrideRestWeather) {
 				log.info "Sending alert (override active): ${alertmsg}"
 				pushNow(alertmsg, repeatCheck)
 				if(UsealertSwitch && alertSwitch) alertSwitch.on()
-				if(alertWmatch) state.alertWeatherMatch = ListofAlertsFLD[y].alertexpires
+				if(alertWmatch) state.alertWeatherMatch = mListofAlertsFLD[y].alertexpires
 				talkNow(alertmsg, repeatCheck)
 			}else{
 				if(pushoverttsalways) {
@@ -362,14 +367,16 @@ void alertNow(Integer y, String alertmsg, Boolean repeatCheck){
 }
 
 void walertCheck(String alertmsg="a"){
-	if(!ListofAlertsFLD && (List)state.ListofAlerts) ListofAlertsFLD = state.ListofAlerts // on hub restart or code reload
+	String myId=app.getId()
+	if(!ListofAlertsFLD[myId] && (List)state.ListofAlerts) ListofAlertsFLD[myId] = state.ListofAlerts // on hub restart or code reload
+	List<Map> mListofAlertsFLD = ListofAlertsFLD[myId]
 
 	Boolean alertSwitchReset = false
 	if(state.alertWeatherMatch) {
 		Boolean alertReset = true
-		for(y=0;y<ListofAlertsFLD.size();y++) {
-			if(UsealertSwitch && alertSwitch && alertSwitchWeatherType && alertSwitchWeatherTypeWatch && ListofAlertsFLD && y!=null && 
-                              alertSwitchWeatherTypeWatch.contains(ListofAlertsFLD[y].alertevent) ) alertReset=false
+		for(y=0;y<mListofAlertsFLD.size();y++) {
+			if(UsealertSwitch && alertSwitch && alertSwitchWeatherType && alertSwitchWeatherTypeWatch && mListofAlertsFLD && y!=null && 
+                              alertSwitchWeatherTypeWatch.contains(mListofAlertsFLD[y].alertevent) ) alertReset=false
 		}
 		if(alertReset) { state.alertWeatherMatch=null; alertSwitchReset=true }
 	}
@@ -425,7 +432,7 @@ void repeatNow(Boolean newmsg=false){
 	if(doRefresh) runIn(1,callRefreshTile)
 }
 
-@Field volatile static List<Map> ListofAlertsFLD=[]
+@Field volatile static Map<String,List> ListofAlertsFLD=[:]
 
 void issueGetAlertMsg() {
 	Map result = getResponseURL(true)
@@ -441,10 +448,12 @@ void finishAlertMsg(Map result){
 	List ListofAlerts = []
 	List expireList = []
 
-	if(!ListofAlertsFLD && (List)state.ListofAlerts) ListofAlertsFLD = state.ListofAlerts // on hub restart or code reload
+	String myId=app.getId()
+	if(!ListofAlertsFLD[myId] && (List)state.ListofAlerts) ListofAlertsFLD[myId] = state.ListofAlerts // on hub restart or code reload
+	List<Map> mListofAlertsFLD = ListofAlertsFLD[myId]
 
 	Boolean hadAlerts=false
-	if(ListofAlertsFLD.size()>0) hadAlerts=true
+	if(mListofAlertsFLD.size()>0) hadAlerts=true
 
 	if(result) {
 		Boolean IsnewList=false
@@ -475,8 +484,8 @@ void finishAlertMsg(Map result){
 				if(!(alertexpires.compareTo(timestamp)>=0)) { expired=true }
 				if(!expired || settings.debug) {
 					Boolean isNewNotice=false
-					if(ListofAlertsFLD.size() > 0) {
-						Map fndMsg = ListofAlertsFLD.find { ((String)it.alertid).contains((String)msg.alertid) }
+					if(mListofAlertsFLD.size() > 0) {
+						Map fndMsg = mListofAlertsFLD.find { ((String)it.alertid).contains((String)msg.alertid) }
 						if(fndMsg) { msg = fndMsg }
 						else isNewNotice = true
 					} else {
@@ -499,39 +508,44 @@ void finishAlertMsg(Map result){
 		} //end of for statement
 
 //ERS
-		ListofAlertsFLD = ListofAlerts
+		mListofAlertsFLD = ListofAlerts
 		state.ListofAlerts = ListofAlerts
+		ListofAlertsFLD[myId] = mListofAlertsFLD
+		ListofAlertsFLD = ListofAlertsFLD
+
 		if(ListofAlerts) {
 			if(logEnable) log.debug "ListofAlerts is ${ListofAlerts}"
 		} else { state.remove('ListofAlerts'); state.remove('alertAnnounced') }
 
-		if(ListofAlertsFLD) {
+		if(mListofAlertsFLD) {
 			Boolean fixedRepeat=false
 			Boolean schedTile=false
-			for(y=0;y<ListofAlertsFLD.size();y++) {
-				Map msg = ListofAlertsFLD[y]
+			for(y=0;y<mListofAlertsFLD.size();y++) {
+				Map msg = mListofAlertsFLD[y]
 				if(msg && !(Boolean)msg.expired) {
 					if(!(Boolean)msg.alertAnnounced) {
 						msg.alertAnnounced=true
-						ListofAlertsFLD[y] = msg
+						mListofAlertsFLD[y] = msg
+						ListofAlertsFLD[myId] = mListofAlertsFLD
 						ListofAlertsFLD=ListofAlertsFLD
-						state.ListofAlerts = ListofAlertsFLD
+						state.ListofAlerts = mListofAlertsFLD
 						alertNow(y, (String)msg.alertmsg, false)
 						if(repeatYes && !fixedRepeat){
 							fixedRepeat=true
 							state.repeatmsg = (String)msg.alertmsg
 							repeatNow(true)
 						}
+						schedTile=true
 					}
 					if(repeatYes && !fixedRepeat){
 						fixedRepeat=true
+						if((String)state.repeatmsg != (String)msg.alertmsg) schedTile=true
 						state.repeatmsg = (String)msg.alertmsg // in case messages moved around in order
 					}
-					if(!schedTile) {
-						schedTile=true
-						runIn(1,callRefreshTile)
-					}
 				}
+			}
+			if(schedTile) {
+				runIn(1,callRefreshTile)
 			}
 		} else if(logEnable) log.info "No new alerts.  Waiting ${whatPoll.toInteger()} minute(s) before next poll..."
 	}
@@ -837,7 +851,9 @@ void pushNow(String alertmsg, Boolean repeatCheck) {
 
 
 List getTile() {
-	if(!ListofAlertsFLD && (List)state.ListofAlerts) ListofAlertsFLD = state.ListofAlerts // on hub restart or code reload
+	String myId=app.getId()
+	if(!ListofAlertsFLD[myId] && (List)state.ListofAlerts) ListofAlertsFLD[myId] = state.ListofAlerts // on hub restart or code reload
+	List<Map> mListofAlertsFLD = ListofAlertsFLD[myId]
 	List msg = []
 	if(!(Boolean)settings.disableTile){
 		if(logEnable) log.info "Creating data information for tile display."
@@ -845,10 +861,10 @@ List getTile() {
 			if((Boolean)atomicState.testmsg) {
 				msg << [alertmsg:(String)state.repeatmsg]
 			}else{
-				if(ListofAlertsFLD) {
-					for(x=0;x<ListofAlertsFLD.size();x++) {
+				if(mListofAlertsFLD) {
+					for(x=0;x<mListofAlertsFLD.size();x++) {
 						if(msg.toString().length() < 100000) {
-							if(!(Boolean)ListofAlertsFLD[x].expired) msg << [alertmsg:ListofAlertsFLD[x].alertmsg]
+							if(!(Boolean)mListofAlertsFLD[x].expired) msg << [alertmsg:mListofAlertsFLD[x].alertmsg]
 						}
 					}
 				}
@@ -982,7 +998,7 @@ void checkState() {
 	if(whatPoll==null) app.updateSetting("whatPoll",[value:"5",type:"enum"])
 	if(logEnable==null) app.updateSetting("logEnable",[value:"false",type:"bool"])
 	if(logMinutes==null) app.updateSetting("logMinutes",[value:15,type:"number"])
-	if(whatAlertSeverity==null) app.updateSetting("whatAlertSeverity",[value:"Severe",type:"enum"])
+	if(whatAlertSeverity==null) app.updateSetting("whatAlertSeverity",[value:"severe",type:"enum"])
 	if(alertCustomMsg==null) app.updateSetting("whatCustomMsg",[value:"{alertseverity} Weather Alert for the following counties: {alertarea} {alertdescription} This is the end of this Weather Announcement.",type:"text"])
 
 	Integer t0
@@ -1014,8 +1030,10 @@ void initialize() {
 	createChildDevices()
 	state.repeat = false
 	state.repeatmsg = (String)null
-	ListofAlertsFLD = []
-	state.ListofAlerts = ListofAlerts
+	String myId=app.getId()
+	ListofAlertsFLD[myId] = []
+	ListofAlertsFLD = ListofAlertsFLD
+	state.ListofAlerts = []
 	if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow(null, (String)null, false) // maybe Switch.off()
 	log.warn "NOAA Weather Alerts application state is reset."
 	runIn(1,callRefreshTile)
