@@ -2,10 +2,10 @@
    "packageName": "NOAA Weather Alerts (Latest)",
    "minimumHEVersion": "2.1.9",
    "author": "Aaron Ward",
-   "dateReleased": "2021-02-11",
-   "version": "4.0.008",
+   "dateReleased": "2021-02-22",
+   "version": "4.0.010",
    "licenseFile": "",
-   "releaseNotes": "Add ability to disable tile device.",
+   "releaseNotes": "Optimize tile device operation.",
    "documentationLink": "https://github.com/imnotbob/Hubitat-4/blob/master/NOAA/README.md",
    "communityLink": "https://community.hubitat.com/t/release-noaa-weather-alerts/50588",
    "apps" : [
