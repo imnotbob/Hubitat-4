@@ -128,7 +128,7 @@ def ConfigPage() {
 					"moderate": "Moderate",
 					"severe": "Severe",
 					"extreme": "Extreme"], required: true, multiple: true, defaultValue: "severe"
-			input name: "whatPoll", type: "enum", title: "Poll Frequency: ", options: ["1": "1 Minute", "5": "5 Minutes", "10": "10 Minutes", "15": "15 Minutes"], required: true, multiple: false, defaultValue: "5"
+			input name: "whatPoll", type: "enum", title: "Poll Frequency: ", options: ["1": "1 Minute", "5": "5 Minutes", "10": "10 Minutes", "15": "15 Minutes", "60": "60 Minutes"], required: true, multiple: false, defaultValue: "5"
 			input "repeatYes", "bool", title: "Repeat Alert?", require: false, defaultValue: false, submitOnChange: true
 			if(repeatYes) {
 				input name:"repeatTimes", type: "number", title: "Number of times to repeat the alert?", require: false, defaultValue: 1, submitOnChange:true
@@ -1036,15 +1036,6 @@ void initialize() {
 	state.ListofAlerts = []
 	if(UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow(null, (String)null, false) // maybe Switch.off()
 	log.warn "NOAA Weather Alerts application state is reset."
-	runIn(1,callRefreshTile)
-	if(logEnable){
-		Integer myLog=15
-		if(logMinutes!=null)myLog=logMinutes.toInteger()
-		if(myLog!=0){
-			log.warn "Debug messages set to automatically disable in ${myLog} minute(s)."
-			runIn((myLog*60),logsOff)
-		}else log.warn "Debug logs set to not automatically disable."
-	}else log.info "Debug logs disabled."
 
 	Integer myPoll=5
 	if(whatPoll!=null)myPoll=whatPoll.toInteger()
@@ -1058,6 +1049,9 @@ void initialize() {
 		case 15:
 			runEvery15Minutes(main)
 			break
+		case 60:
+			runEvery1Hour(main)
+			break
 		case 5:
 		//	runEvery5Minutes(main)
 		//	break
@@ -1069,7 +1063,18 @@ void initialize() {
 	Integer random_int=random.nextInt(60)
 	Integer random_dint=random.nextInt(9)
 	schedule("${random_int} ${random_dint} 01 ? * *", buildEventsList) // once a day 1:00 AM
+
 	main()
+
+	runIn(1,callRefreshTile)
+	if(logEnable){
+		Integer myLog=15
+		if(logMinutes!=null)myLog=logMinutes.toInteger()
+		if(myLog!=0){
+			log.warn "Debug messages set to automatically disable in ${myLog} minute(s)."
+			runIn((myLog*60),logsOff)
+		}else log.warn "Debug logs set to not automatically disable."
+	}else log.info "Debug logs disabled."
 }
 
 void installed() {
