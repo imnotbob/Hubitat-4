@@ -3,9 +3,9 @@
    "minimumHEVersion": "2.1.9",
    "author": "Aaron Ward",
    "dateReleased": "2021-02-25",
-   "version": "4.0.011",
+   "version": "4.0.012",
    "licenseFile": "",
-   "releaseNotes": "Optimize tile device operation.",
+   "releaseNotes": "Optimize tile device operation., workaround API issue from NOAA",
    "documentationLink": "https://github.com/imnotbob/Hubitat-4/blob/master/NOAA/README.md",
    "communityLink": "https://community.hubitat.com/t/release-noaa-weather-alerts/50588",
    "apps" : [

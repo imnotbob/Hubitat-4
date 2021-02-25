@@ -18,7 +18,7 @@
  * Last Update: 2/25/2021
  */
 
-static String version() { return "4.0.011" }
+static String version() { return "4.0.012" }
 
 import groovy.transform.Field
 import groovy.json.*
@@ -452,7 +452,7 @@ void finishAlertMsg(Map result){
 
 	String myId=app.getId()
 	if(!ListofAlertsFLD[myId] && (List)state.ListofAlerts) ListofAlertsFLD[myId] = state.ListofAlerts // on hub restart or code reload
-	List<Map> mListofAlertsFLD = ListofAlertsFLD[myId] ?: [:]
+	List<Map> mListofAlertsFLD = ListofAlertsFLD[myId] ?: []
 
 	Boolean hadAlerts=false
 	if(mListofAlertsFLD.size()>0) hadAlerts=true
@@ -1014,11 +1014,11 @@ Map getResponseEvents() {
 			result = response.data
 			Integer responseCode=response.status
 			if(responseCode>=200 && responseCode<300 && resp.data){
-			} else { log.warn "The API Weather.gov did not return a response." }
+			} else { log.warn "The API Weather.gov get types did not return a response." }
 		}
 	}
 	catch (e) {
-		log.warn "The API Weather.gov did not return a response. $e"
+		log.warn "The API Weather.gov get types did not return a response. $e"
 	}
 	return result
 }
