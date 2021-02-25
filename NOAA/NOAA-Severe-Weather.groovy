@@ -371,7 +371,7 @@ void alertNow(Integer y, String alertmsg, Boolean repeatCheck){
 void walertCheck(String alertmsg="a"){
 	String myId=app.getId()
 	if(!ListofAlertsFLD[myId] && (List)state.ListofAlerts) ListofAlertsFLD[myId] = state.ListofAlerts // on hub restart or code reload
-	List<Map> mListofAlertsFLD = ListofAlertsFLD[myId]
+	List<Map> mListofAlertsFLD = ListofAlertsFLD[myId] ?: [:]
 
 	Boolean alertSwitchReset = false
 	if(state.alertWeatherMatch) {
@@ -452,7 +452,7 @@ void finishAlertMsg(Map result){
 
 	String myId=app.getId()
 	if(!ListofAlertsFLD[myId] && (List)state.ListofAlerts) ListofAlertsFLD[myId] = state.ListofAlerts // on hub restart or code reload
-	List<Map> mListofAlertsFLD = ListofAlertsFLD[myId]
+	List<Map> mListofAlertsFLD = ListofAlertsFLD[myId] ?: [:]
 
 	Boolean hadAlerts=false
 	if(mListofAlertsFLD.size()>0) hadAlerts=true
