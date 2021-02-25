@@ -15,10 +15,10 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 2/20/2021
+ * Last Update: 2/25/2021
  */
 
-static String version() { return "4.0.010" }
+static String version() { return "4.0.011" }
 
 import groovy.transform.Field
 import groovy.json.*
@@ -77,7 +77,7 @@ def mainPage() {
 }
 
 def NotificationPage() {
-	if((List)state.eventTypes==null || (List)state.eventTypes==[]) buildEventsList()
+	buildEventsList()
 	dynamicPage(name: "NotificationPage") {
 		section(UIsupport("logo","")) {
 			paragraph UIsupport("header", " Setup Notification Device(s)")
@@ -123,11 +123,11 @@ def ConfigPage() {
 			paragraph "Configure NOAA to look for specific alert severities, how often to poll for weather information, repeat alerts, use custom coordinates and customize the alert message sent to notification device(s)."
 			input name: "whatAlertSeverity", type: "enum", title: "Weather Severity(s) to gather in poll: ",
 				options: [
-					"unknown": "Unknown",
-					"minor": "Minor",
-					"moderate": "Moderate",
-					"severe": "Severe",
-					"extreme": "Extreme"], required: true, multiple: true, defaultValue: "severe"
+					"Unknown": "Unknown",
+					"Minor": "Minor",
+					"Moderate": "Moderate",
+					"Severe": "Severe",
+					"Extreme": "Extreme"], required: true, multiple: true, defaultValue: "severe"
 			input name: "whatPoll", type: "enum", title: "Poll Frequency: ", options: ["1": "1 Minute", "5": "5 Minutes", "10": "10 Minutes", "15": "15 Minutes", "60": "60 Minutes"], required: true, multiple: false, defaultValue: "5"
 			input "repeatYes", "bool", title: "Repeat Alert?", require: false, defaultValue: false, submitOnChange: true
 			if(repeatYes) {
@@ -161,6 +161,7 @@ def ConfigPage() {
 }
 
 def AdvConfigPage() {
+	buildEventsList()
 	dynamicPage(name: "AdvConfigPage") {
 		section(UIsupport("logo","")) {
 			paragraph UIsupport("header", " Advanced Alert Settings")
@@ -184,6 +185,7 @@ def AdvConfigPage() {
 }
 
 def RestrictionsPage() {
+	buildEventsList()
 	dynamicPage(name: "RestrictionsPage") {
 		section(UIsupport("logo","")) {
 			paragraph UIsupport("header", " Restrictions")
@@ -475,7 +477,7 @@ void finishAlertMsg(Map result){
 			//if alert has expired ignore alert
 
 			//if specific weatheralerts is chosen
-			String t0= settings.myWeatherAlert
+			String t0=settings.myWeatherAlert
 			if(t0==(String)null || t0=="") msg = buildAlertMap(feat)
 			else if(t0.contains((String)feat.properties.event)) msg = buildAlertMap(feat)
 
@@ -875,11 +877,27 @@ List getTile() {
 	return msg
 }
 
-void buildEventsList() {
-	Map results = getResponseEvents()
-	if(results) {
-		state.eventTypes = (List)results.eventTypes
-		if(logEnable) log.debug "Acquired current events list from api.weather.gov"
+void buildEventsListFrc() {
+	buildEventsList(true)
+}
+
+@Field static final List<String> eventListFLD = [
+"911 Telephone Outage Emergency", "Administrative Message", "Air Quality Alert", "Air Stagnation Advisory", "Arroyo And Small Stream Flood Advisory", "Ashfall Advisory", "Ashfall Warning", "Avalanche Advisory", "Avalanche Warning", "Avalanche Watch", "Beach Hazards Statement", "Blizzard Warning", "Blizzard Watch", "Blowing Dust Advisory", "Blowing Dust Warning", "Brisk Wind Advisory", "Child Abduction Emergency", "Civil Danger Warning", "Civil Emergency Message", "Coastal Flood Advisory", "Coastal Flood Statement", "Coastal Flood Warning", "Coastal Flood Watch", "Dense Fog Advisory", "Dense Smoke Advisory", "Dust Advisory", "Dust Storm Warning", "Earthquake Warning", "Evacuation - Immediate", "Excessive Heat Warning", "Excessive Heat Watch", "Extreme Cold Warning", "Extreme Cold Watch", "Extreme Fire Danger", "Extreme Wind Warning", "Fire Warning", 
+"Fire Weather Watch", "Flash Flood Statement", "Flash Flood Warning", "Flash Flood Watch", "Flood Advisory", "Flood Statement", "Flood Warning", "Flood Watch", "Freeze Warning", "Freeze Watch", "Freezing Fog Advisory", "Freezing Rain Advisory", "Freezing Spray Advisory", "Frost Advisory", "Gale Warning", "Gale Watch", "Hard Freeze Warning", "Hard Freeze Watch", "Hazardous Materials Warning", "Hazardous Seas Warning", "Hazardous Seas Watch", "Hazardous Weather Outlook", "Heat Advisory", "Heavy Freezing Spray Warning", "Heavy Freezing Spray Watch", "High Surf Advisory", "High Surf Warning", "High Wind Warning", "High Wind Watch", "Hurricane Force Wind Warning", "Hurricane Force Wind Watch", "Hurricane Local Statement", "Hurricane Warning", "Hurricane Watch", "Hydrologic Advisory", "Hydrologic Outlook", "Ice Storm Warning", "Lake Effect Snow Advisory", "Lake Effect Snow Warning", "Lake Effect Snow Watch", "Lake Wind Advisory", "Lakeshore Flood Advisory", "Lakeshore Flood Statement", "Lakeshore Flood Warning", 
+"Lakeshore Flood Watch", "Law Enforcement Warning", "Local Area Emergency", "Low Water Advisory", "Marine Weather Statement", "Nuclear Power Plant Warning", "Radiological Hazard Warning", "Red Flag Warning", "Rip Current Statement", "Severe Thunderstorm Warning", "Severe Thunderstorm Watch", "Severe Weather Statement", "Shelter In Place Warning", "Short Term Forecast", "Small Craft Advisory", "Small Craft Advisory For Hazardous Seas", "Small Craft Advisory For Rough Bar", "Small Craft Advisory For Winds", "Small Stream Flood Advisory", "Snow Squall Warning", "Special Marine Warning", "Special Weather Statement", "Storm Surge Warning", "Storm Surge Watch", "Storm Warning", "Storm Watch", "Test", "Tornado Warning", "Tornado Watch", "Tropical Depression Local Statement", "Tropical Storm Local Statement", "Tropical Storm Warning", 
+"Tropical Storm Watch", "Tsunami Advisory", "Tsunami Warning", "Tsunami Watch", "Typhoon Local Statement", "Typhoon Warning", "Typhoon Watch", "Urban And Small Stream Flood Advisory", "Volcano Warning", "Wind Advisory", "Wind Chill Advisory", "Wind Chill Warning", "Wind Chill Watch", "Winter Storm Warning", "Winter Storm Watch", "Winter Weather Advisory"
+]
+
+void buildEventsList(Boolean frc=false) {
+	if(frc || (List)state.eventTypes==null || (List)state.eventTypes==[]) {
+		Map results = getResponseEvents()
+		if(results) {
+			state.eventTypes = (List)results.eventTypes
+			if(logEnable) log.debug "Acquired current events list from api.weather.gov"
+		}
+	}
+	if((List)state.eventTypes==null || (List)state.eventTypes==[]) {
+		state.eventTypes = eventListFLD
 	}
 }
 
@@ -939,16 +957,21 @@ Map getResponseURL(Boolean async=false) {
 
 	if(!async){
 		try {
-			httpGet(requestParams)	{ response -> result = response.data }
+			httpGet(requestParams)	{ response ->
+				result = response.data
+				Integer responseCode=response.status
+				if(responseCode>=200 && responseCode<300 && resp.data){
+				} else { log.warn "The API Weather.gov did not return a response." }
+			}
 		}
-		catch (e) { if(logEnable) log.warn "The API Weather.gov did not return a response." }
+		catch (e) { if(logEnable) log.warn "The API Weather.gov did not return a response. $e" }
 		return result
 	} else {
 		try {
 			asynchttpGet('ahttpreq', requestParams, [command: 'a'])
 			return [async:true]
 		}
-		catch (e) { if(logEnable) log.warn "Async http failed." }
+		catch (e) { log.warn "Async http failed. $e" }
 		return result
 	}
 }
@@ -969,9 +992,9 @@ void ahttpreq(resp, Map cbD){
 		finishAlertMsg(data)
 
 
-	} else if(logEnable) log.warn "The API Weather.gov did not return a response."
+	} else log.warn "The API Weather.gov did not return a response."
     } catch(e) {
-		if(logEnable) log.warn "The API Weather.gov did not return a response. (exception), $e"
+	log.warn "The API Weather.gov did not return a response. (exception), $e"
     }
 	walertCheck()
 }
@@ -987,9 +1010,16 @@ Map getResponseEvents() {
 	]
 
 	try {
-		httpGet(requestParams)	{ response -> result = response.data}
+		httpGet(requestParams) { response ->
+			result = response.data
+			Integer responseCode=response.status
+			if(responseCode>=200 && responseCode<300 && resp.data){
+			} else { log.warn "The API Weather.gov did not return a response." }
+		}
 	}
-	catch (e) { if(logEnable) log.warn "The API Weather.gov did not return a response." }
+	catch (e) {
+		log.warn "The API Weather.gov did not return a response. $e"
+	}
 	return result
 }
 
@@ -1024,7 +1054,7 @@ void installCheck(){
 }
 
 void initialize() {
-	buildEventsList()
+	buildEventsListFrc()
 	checkState()
 	unschedule()
 	createChildDevices()
@@ -1062,7 +1092,7 @@ void initialize() {
 	def random=new Random()
 	Integer random_int=random.nextInt(60)
 	Integer random_dint=random.nextInt(9)
-	schedule("${random_int} ${random_dint} 01 ? * *", buildEventsList) // once a day 1:00 AM
+	schedule("${random_int} ${random_dint} 01 ? * *", buildEventsListFrc) // once a day 1:00 AM
 
 	main()
 
@@ -1071,9 +1101,9 @@ void initialize() {
 		Integer myLog=15
 		if(logMinutes!=null)myLog=logMinutes.toInteger()
 		if(myLog!=0){
-			log.warn "Debug messages set to automatically disable in ${myLog} minute(s)."
+			log.info "Debug messages set to automatically disable in ${myLog} minute(s)."
 			runIn((myLog*60),logsOff)
-		}else log.warn "Debug logs set to not automatically disable."
+		}else log.info "Debug logs set to not automatically disable."
 	}else log.info "Debug logs disabled."
 }
 
@@ -1120,6 +1150,6 @@ static String UIsupport(String type, String txt) {
 }
 
 void logsOff(){
-	log.warn "Debug logging disabled."
+	log.info "Debug logging disabled."
 	app.updateSetting("logEnable",[value:"false",type:"bool"])
 }
