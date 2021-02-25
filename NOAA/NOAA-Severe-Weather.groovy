@@ -123,11 +123,11 @@ def ConfigPage() {
 			paragraph "Configure NOAA to look for specific alert severities, how often to poll for weather information, repeat alerts, use custom coordinates and customize the alert message sent to notification device(s)."
 			input name: "whatAlertSeverity", type: "enum", title: "Weather Severity(s) to gather in poll: ",
 				options: [
-					"Unknown": "Unknown",
-					"Minor": "Minor",
-					"Moderate": "Moderate",
-					"Severe": "Severe",
-					"Extreme": "Extreme"], required: true, multiple: true, defaultValue: "severe"
+					"unknown": "Unknown",
+					"minor": "Minor",
+					"moderate": "Moderate",
+					"severe": "Severe",
+					"extreme": "Extreme"], required: true, multiple: true, defaultValue: "severe"
 			input name: "whatPoll", type: "enum", title: "Poll Frequency: ", options: ["1": "1 Minute", "5": "5 Minutes", "10": "10 Minutes", "15": "15 Minutes", "60": "60 Minutes"], required: true, multiple: false, defaultValue: "5"
 			input "repeatYes", "bool", title: "Repeat Alert?", require: false, defaultValue: false, submitOnChange: true
 			if(repeatYes) {
@@ -371,7 +371,7 @@ void alertNow(Integer y, String alertmsg, Boolean repeatCheck){
 void walertCheck(String alertmsg="a"){
 	String myId=app.getId()
 	if(!ListofAlertsFLD[myId] && (List)state.ListofAlerts) ListofAlertsFLD[myId] = state.ListofAlerts // on hub restart or code reload
-	List<Map> mListofAlertsFLD = ListofAlertsFLD[myId] ?: [:]
+	List<Map> mListofAlertsFLD = ListofAlertsFLD[myId] ?: []
 
 	Boolean alertSwitchReset = false
 	if(state.alertWeatherMatch) {
