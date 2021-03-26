@@ -15,10 +15,10 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 2/25/2021
+ * Last Update: 3/26/2021
  */
 
-static String version() { return "4.0.012" }
+static String version() { return "4.0.013" }
 
 import groovy.transform.Field
 import groovy.json.*
@@ -68,7 +68,7 @@ def mainPage() {
 
 				if(modesYes || switchYes || modeSeverityYes || pushoverttsalways) href(name: "RestrictionsPage", title: "${UIsupport("configured","")} Restrictions", required: false, page: "RestrictionsPage", description: "Setup restriction options")
 				else href(name: "RestrictionsPage", title: "Restrictions", required: false, page: "RestrictionsPage", description: "Setup restriction options")
-				href(name: "SettingsPage", title: "Settings", required: false, page: "SettingsPage", description: "Modify NOAA Weather Alerts Application Settings")
+				href(name: "SettingsPage", title: "Settings", required: false, page: "SettingsPage", description: "Modify NOAA Weather Alerts Application Settings, Logging, Test")
 				paragraph UIsupport("line","")
 				paragraph UIsupport("footer","")
 			}
@@ -85,22 +85,34 @@ def NotificationPage() {
 			// PushOver Devices
 			input "pushovertts", "bool", title: "Use 'Pushover' device(s)?", required: false, defaultValue: false, submitOnChange: true
 			if(pushovertts){ input "pushoverdevice", "capability.notification", title: "PushOver Device", required: true, multiple: true}
+			else app.removeSetting('pushoverdevice')
 
-			// Music Speakers (Sonos, etc)
-			input(name: "musicmode", type: "bool", defaultValue: false, title: "Use Music Speaker(s) for TTS?", description: "Music Speaker(s)?", submitOnChange: true)
-			if (musicmode) input "musicspeaker", "capability.musicPlayer", title: "Choose speaker(s)", required: false, multiple: true, submitOnChange: true
+			// audioNotification Music Speakers (Sonos, etc)
+			input(name: "musicmode", type: "bool", defaultValue: false, title: "Use audioNotification Speaker(s) for TTS? (EchoSpeaks, etc)", description: "audioNotification Speaker(s)?", submitOnChange: true)
+			if (musicmode) input "musicspeaker", "capability.audioNotification", title: "Choose audioNotification speaker(s)", required: false, multiple: true, submitOnChange: true
+			else app.removeSetting('musicspeaker')
 
 			// Speech Speakers
-			input(name: "speechmode", type: "bool", defaultValue: false, title: "Use Speech Speaker(s) for TTS? (Google, Alexa TTS, etc)", description: "Speech Speaker(s)?", submitOnChange: true)
-			if (speechmode) input "speechspeaker", "capability.speechSynthesis", title: "Choose speaker(s)", required: false, multiple: true, submitOnChange: true
+			input(name: "speechmode", type: "bool", defaultValue: false, title: "Use speechSynthesis Speaker(s) for TTS? (Google, Alexa TTS, etc)", description: "Speech Speaker(s)?", submitOnChange: true)
+			if (speechmode) {
+				input "speechspeaker", "capability.speechSynthesis", title: "Choose speechSynthesis speaker(s)", required: false, multiple: true, submitOnChange: true
+				input(name: "speechdelay", type: "bool", defaultValue: false, title: "Place delays between commands to speechSynthesis Speaker(s)", description: "Speech Speaker(s)?", submitOnChange: true)
+			} else {
+				app.removeSetting('speechspeaker')
+				app.removeSetting('speechdelay')
+			}
 
 			// Echo Speaks devices
 			input (name: "echoSpeaks2", type: "bool", defaultValue: false, title: "Use Echo Speaks device(s) for TTS?", description: "Echo Speaks device?", submitOnChange: true)
 			if(echoSpeaks2) input "echospeaker", "capability.musicPlayer", title: "Choose Echo Speaks Device(s)", required: false, multiple: true, submitOnChange: true
+			else app.removeSetting('echospeaker')
 
 			// Master Volume settings
-			input "speakervolume", "number", title: "Notification Volume Level:", description: "0-100%", required: false, defaultValue: 75, submitOnChange: true
-			input "speakervolRestore", "number", title: "Restore Volume Level:", description: "0-100", required: false, defaultValue: 60, submitOnChange: true
+			if(echoSpeaks2 || speechmode || musicmode) input "speakervolume", "number", title: "Notification Volume Level: (Leave blank to use current volume setting)", description: "0-100%", required: false, submitOnChange: true
+			if(echoSpeaks2 || speechmode) input "speakervolRestore", "number", title: "Restore Volume Level: (Leave blank to restore previous value)", description: "0-100", required: false, submitOnChange: true
+			else app.removeSetting('speakervolRestore')
+
+			if(!echoSpeaks2 && !speechmode && !musicmode) { app.removeSetting('speakervolRestore'); app.removeSetting('speakervolume') }
 
 			// Switch to set when alert active
 			input (name: "UsealertSwitch", type: "bool", title: "Use a switch to turn ON with Alert?", required: false, defaultValue: false, submitOnChange: true)
@@ -109,6 +121,11 @@ def NotificationPage() {
 				input (name:"alertSwitchOff", type: "bool", title: "Turn off switch when all Alerts expire?", required: false, defaultValue: false, submitOnChange: true)
 				input (name:"alertSwitchWeatherType", type: "bool", title: "Turn off switch if certain weather alert types expire?", required: false, defaultValue: false, submitOnChange: true)
 				if(alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", "enum", title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: (List)state.eventTypes
+			} else {
+				app.removeSetting('alertSwitch')
+				app.removeSetting('alertSwitchOff')
+				app.removeSetting('alertSwitchWeatherType')
+				app.removeSetting('alertSwitchWeatherTypeWatch')
 			}
 			// Disable Tile updates
 			input (name: "disableTile", type: "bool", defaultValue: false, title: "Disable updates of Tile Device to display alerts?", description: "Disable tile device?", submitOnChange: true)
@@ -136,7 +153,7 @@ def ConfigPage() {
 			}
 			input name: "useCustomCords", type: "bool", title: "Use Custom Coordinates?", require: false, defaultValue: false, submitOnChange: true
 			if(useCustomCords) {
-				paragraph "Below coordinates are acquired from your Hubitat Hub.  Enter your custom coordinates:"
+				paragraph "Below coordinates are acquired from your Hubitat Hub. Enter your custom coordinates:"
 				input name:"customlatitude", type:"text", title: "Latitude coordinate:", require: false, defaultValue: "${location.latitude}", submitOnChange: true
 				input name:"customlongitude", type:"text", title: "Longitude coordinate:", require: false, defaultValue: "${location.longitude}", submitOnChange: true
 			}
@@ -165,7 +182,7 @@ def AdvConfigPage() {
 	dynamicPage(name: "AdvConfigPage") {
 		section(UIsupport("logo","")) {
 			paragraph UIsupport("header", " Advanced Alert Settings")
-			paragraph "Use with caution as below settings may cause undesired results.  Only select what you would like to refine in your alerts.  Reference <a href='https://www.weather.gov/documentation/services-web-api?prevfmt=application%2Fcap%2Bxml/default/get_alerts#/default/get_alerts' target='_blank'>Weather.gov API</a> and use the API response test button below to determine your desired results."
+			paragraph "Use with caution as below settings may cause undesired results. Only select what you would like to refine in your alerts. Reference <a href='https://www.weather.gov/documentation/services-web-api?prevfmt=application%2Fcap%2Bxml/default/get_alerts#/default/get_alerts' target='_blank'>Weather.gov API</a> and use the API response test button below to determine your desired results."
 			input "myWeatherAlert", "enum", title: "Filter results for specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: (List)state.eventTypes
 			input name: "whatAlertUrgency", type: "enum", title: "Poll only for a specific Alert Urgency: ", multiple: true, submitOnChange: true,
 				options: [
@@ -189,7 +206,7 @@ def RestrictionsPage() {
 	dynamicPage(name: "RestrictionsPage") {
 		section(UIsupport("logo","")) {
 			paragraph UIsupport("header", " Restrictions")
-			paragraph "Restrict notifications based on modes or a switch.  Override restrictions if the alert is a certain severity or weather type.  For notifications that are restricted, if a PushOver device is enabled alerts can still be sent but not over TTS."
+			paragraph "Restrict notifications based on modes or a switch. Override restrictions if the alert is a certain severity or weather type. For notifications that are restricted, if a PushOver device is enabled alerts can still be sent but not over TTS."
 			input "modesYes", "bool", title: "Enable restriction of notifications by current mode(s)?", required: true, defaultValue: false, submitOnChange: true
 			if(modesYes) input(name:"modes", type: "mode", title: "Restrict notifications when current mode is:", multiple: true, required: false, submitOnChange: true)
 			input "switchYes", "bool", title: "Restrict notifications using a switch?", required: true, defaultValue: false, submitOnChange: true
@@ -210,6 +227,7 @@ def RestrictionsPage() {
 			if(modeWeatherType) input name: "WeatherType", type: "enum", title: "Select weather type to ignore restrictions: ", required: true, multiple:true, submitOnChange: true, options: (List)state.eventTypes
 			paragraph "<hr>"
 			if(pushovertts) input "pushoverttsalways", "bool", title: "Enable Pushover notifications even when restricted?", required: false, defaultValue: false, submitOnChange: true
+			else app.removeSetting('pushoverttsalways')
 		}
 	}
 }
@@ -224,11 +242,13 @@ def SettingsPage() {
 			input "runTest", "bool", title: "Run a test Alert?", required: false, defaultValue: false, submitOnChange: true
 			if(runTest) {
 				app.updateSetting("runTest",[value:"false",type:"bool"])
+				app.removeSetting('runTest')
 				runtestAlert()
 			}
 			input "init", "bool", title: "Reset current application state?", required: false, defaultValue: false, submitOnChange: true
 			if(init) {
 				app.updateSetting("init",[value:"false",type:"bool"])
+				app.removeSetting("init")
 				unschedule()
 				log.warn "NOAA Weather Alerts application state is being reset."
 				initialize()
@@ -238,7 +258,9 @@ def SettingsPage() {
 			if(getAPI) {
 				getAlertMsgSync()
 				app.updateSetting("getAPI",[value:"false",type:"bool"])
+				app.removeSetting("getAPI")
 				app.updateSetting("debug",[value:"false",type:"bool"])
+				app.removeSetting("debug")
 
 				String myId=app.getId()
 				if(!ListofAlertsFLD[myId] && (List)state.ListofAlerts) ListofAlertsFLD[myId] = state.ListofAlerts // on hub restart or code reload
@@ -278,8 +300,8 @@ def SettingsPage() {
 								else testalertmsg = "alert would be announced only on TTS device(s)"
 								testalertmsg += " - Restrictions override active."
 							}else{
-								if(pushovertts && pushoverttsalways) testalertmsg = "alert would be announced only on PushOver device(s).  Alert restricted with pushover always override."
-								else testalertmsg = "alert would not be announced.  Alert restricted."
+								if(pushovertts && pushoverttsalways) testalertmsg = "alert would be announced only on PushOver device(s). Alert restricted with pushover always override."
+								else testalertmsg = "alert would not be announced. Alert restricted."
 							}
 						}
 						testConfig +="<table border=1px><tr><td colspan='2'>Alert ${y+1}/${mListofAlertsFLD.size()} - ${testalertmsg}</td></tr>"
@@ -334,26 +356,26 @@ void alertNow(Integer y, String alertmsg, Boolean repeatCheck){
 	if(alertmsg!=(String)null){
 		// no restrictions
 		if(UsealertSwitch && alertSwitch && alertSwitchWeatherType && alertSwitchWeatherTypeWatch && mListofAlertsFLD && y!=null && 
-                              alertSwitchWeatherTypeWatch.contains(mListofAlertsFLD[y].alertevent) ) alertWmatch=true
+				alertSwitchWeatherTypeWatch.contains(mListofAlertsFLD[y].alertevent) ) alertWmatch=true
 
 		if(!restrictionSwitch && !restrictionMode && !overrideRestSeverity && !overrideRestWeather) {//(!modeSeverityYes && !modeWeatherType)) {
-			log.info "Sending alert: ${alertmsg}"
+			if(logEnable) log.info "Sending alert: ${alertmsg}"
 			pushNow(alertmsg, repeatCheck)
 			if(UsealertSwitch && alertSwitch) alertSwitch.on()
 			if(alertWmatch) state.alertWeatherMatch = mListofAlertsFLD[y].alertexpires
 			talkNow(alertmsg, repeatCheck)
 		}else{
 			if(overrideRestSeverity || overrideRestWeather) {
-				log.info "Sending alert (override active): ${alertmsg}"
+				if(logEnable) log.info "Sending alert (override active): ${alertmsg}"
 				pushNow(alertmsg, repeatCheck)
 				if(UsealertSwitch && alertSwitch) alertSwitch.on()
 				if(alertWmatch) state.alertWeatherMatch = mListofAlertsFLD[y].alertexpires
 				talkNow(alertmsg, repeatCheck)
 			}else{
 				if(pushoverttsalways) {
-					log.info "Sending alert to pushover, Restrictions are enabled but PushoverTTS always override enabled: ${alertmsg}"
+					if(logEnable) log.info "Sending alert to pushover, Restrictions are enabled but PushoverTTS always override enabled: ${alertmsg}"
 					pushNow(alertmsg, repeatCheck)
-				}else log.info "Not sending alert, Restrictions are enabled."
+				}else if(logEnable) log.info "Not sending alert, Restrictions are enabled."
 			}
 		}
 	}
@@ -378,7 +400,7 @@ void walertCheck(String alertmsg="a"){
 		Boolean alertReset = true
 		for(y=0;y<mListofAlertsFLD.size();y++) {
 			if(UsealertSwitch && alertSwitch && alertSwitchWeatherType && alertSwitchWeatherTypeWatch && mListofAlertsFLD && y!=null && 
-                              alertSwitchWeatherTypeWatch.contains(mListofAlertsFLD[y].alertevent) ) alertReset=false
+				alertSwitchWeatherTypeWatch.contains(mListofAlertsFLD[y].alertevent) ) alertReset=false
 		}
 		if(alertReset) { state.alertWeatherMatch=null; alertSwitchReset=true }
 	}
@@ -420,7 +442,7 @@ void repeatNow(Boolean newmsg=false){
 			}
 			if((Boolean)state.repeat && (Integer)state.rptCount < (Integer)state.rptNum){
 				state.rptCount = (Integer)state.rptCount + 1
-				if(logEnable) log.debug "Scheduling repeating alert in ${repeatMinutes} minute(s).  This is ${state.rptCount}/${state.rptNum} repeated alert(s). Repeat State: ${state.repeat}"
+				if(logEnable) log.debug "Scheduling repeating alert in ${repeatMinutes} minute(s). This is ${state.rptCount}/${state.rptNum} repeated alert(s). Repeat State: ${state.repeat}"
 				runIn(repeatMinutes.toInteger()*60,repeatNow)
 			}
 		}
@@ -767,54 +789,88 @@ void talkNow(String alertmsg, Boolean repeatCheck) {
 	}else if(useAlertIntro) alertmsg = "${AlertIntro}, " + alertmsg
 
 	if(musicmode) {
-		try {
-			musicspeaker.playTextAndRestore(alertmsg.toLowerCase(), speakervolume)
-			if(logEnable) log.debug "Sending alert to Music Speaker(s)."
+                Boolean okT = false
+                if(musicspeaker && musicspeaker[0].hasCommand('playTextAndRestore')) {
+			try {
+				musicspeaker*.playTextAndRestore(alertmsg.toLowerCase(), speakervolume)
+                		okT = true
+				if(logEnable) log.debug "Sending alert to audioNotification Speaker(s)."
+			}
+			catch (any) { }
 		}
-		catch (any) { log.warn "Music Player device(s) has not been selected or not supported." }
+		if(!okT) { log.warn "audioNotificcation device(s) ${musicspeaker} has not been selected or does not support playTextAndRestore command." }
 	}
 
 	if(echoSpeaks2) {
-		try {
-			echospeaker.setVolumeSpeakAndRestore(speakervolume, alertmsg.toLowerCase())
-			if(logEnable) log.debug "Sending alert to Echo Speaks device(s)."
+                Boolean okT = false
+                if(echospeaker && echospeaker[0].hasCommand('setVolumeSpeakAndRestore')) {
+			try {
+				echospeaker*.setVolumeSpeakAndRestore(speakervolume, alertmsg.toLowerCase(), speakervolRestore)
+                		okT = true
+				if(logEnable) log.debug "Sending alert to Echo Speaks device(s)."
+			}
+			catch (any) { }
 		}
-		catch (any) { log.warn "Echo Speaks device(s) has not been selected or are not supported." }
+		if(!okT) { log.warn "echospeaks device(s) ${echospeaker} has not been selected or does not support setVolumeSpeakAndRestore command." }
 	}
 
 	if(speechmode) {
-		try {
-			speechspeaker.initialize()
-			if(logEnable) log.debug "Initializing Speech Speaker"
-			pauseExecution(2500)
+                Boolean okT = false
+                if(speechspeaker && speechspeaker[0].hasCommand('initialize')) {
+			try {
+				speechspeaker*.initialize()
+				if(logEnable) log.debug "Initializing Speech Speaker"
+				if(speechdelay) pauseExecution(2500)
+			}
+			catch (cany) { log.warn "initialize command failed" }
 		}
-		catch (any) { if(logEnable) log.debug "Speech device doesn't support initialize command" }
+		if(!okT) { if(logEnable) log.debug "Speech device(s) ${speechspeaker} has not been selected or does not support initialize command." }
 
 		Boolean supportsSetVolume=false
-		try {
-			speechspeaker.setVolume(speakervolume)
-			supportsSetVolume=true
-			if(logEnable) log.debug "Setting Speech Speaker to volume level: ${speakervolume}"
-			pauseExecution(2000)
-		}
-		catch (any) { if(logEnable) log.debug "Speech speaker doesn't support volume level command" }
-
-		if(logEnable) log.debug "Sending alert to Speech Speaker(s)"
-		alertmsg = alertmsg.toLowerCase()
-		try { speechspeaker.speak(alertmsg) }
-		catch (any) { log.warn "Speech or Echo Speaks device(s) has not been selected or not supported." }
-
-		try {
-			if(speakervolRestore && supportsSetVolume) {
-				Integer speechDuration = Math.max(Math.round(alertmsg.length()/12),2)+3
-				Long speechDuration2 = speechDuration * 1000L
-				pauseExecution(speechDuration2)
-
-				speechspeaker.setVolume(speakervolRestore)
-				if(logEnable) log.debug "Restoring Speech Speaker to volume level: ${speakervolRestore}"
+		List svVols = []
+                if(speakervolume && speechspeaker && speechspeaker[0].hasCommand('setVolume')) {
+			if(!speakervolRestore) {
+				speechspeaker.each { dev ->
+					def a = dev?.currentState('volume')?.value
+					svVols.push(a)
+				}
 			}
+			try {
+				speechspeaker*.setVolume(speakervolume)
+				supportsSetVolume=true
+				if(logEnable) log.debug "Setting Speech Speaker to volume level: ${speakervolume}"
+				if(speechdelay) pauseExecution(2000)
+			}
+			catch (cany) { log.warn "unable to set volume" }
 		}
-		catch (any) { if (logEnable) log.debug "Speech speaker doesn't support restore volume command" }
+		if(!supportsSetVolume) { if(logEnable) log.debug "Speech device(s) ${speechspeaker} has not been selected or does not support setVolume command." }
+
+		alertmsg = alertmsg.toLowerCase()
+		try {
+			speechspeaker*.speak(alertmsg)
+			if(logEnable) log.debug "Sending alert to Speech Speaker(s)"
+
+			if(supportsSetVolume) {
+				Integer speechDuration = Math.max(Math.round(alertmsg.length()/14),2)+1
+				Long speechDuration2 = speechDuration * 1000L
+				if(speechdelay) pauseExecution(speechDuration2)
+				if(speakervolRestore) {
+					speechspeaker*.setVolume(speakervolRestore)
+					if(logEnable) log.debug "Restoring Speech Speaker to volume level: ${speakervolRestore}"
+				} else {
+					try {
+						Integer i = 0
+						speechspeaker.each { dev ->
+							def a = svVols[i]
+							dev.setVolume(a)
+							if(logEnable) log.debug "Restoring Speech Speaker $dev to volume level: ${a}"
+							i+=1
+						}
+					} catch (many) { if (logEnable) log.debug "Speech speaker doesn't support restore volume command" }
+				}
+				if(speechdelay) pauseExecution(1000)
+			}
+		} catch (cany) { log.warn "Speech device(s) ${speechspeaker} has not been selected or does not support speak command." }
 	}
 }
 
