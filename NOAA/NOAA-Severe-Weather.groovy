@@ -560,7 +560,7 @@ void finishAlertMsg(Map result){
 				if(msgMap && !(Boolean)msgMap.expired) {
 					if(!(Boolean)msgMap.alertAnnounced || !(Boolean)msgMap.alertPushed) {
 						Boolean everDid = ((Boolean)msgMap.alertAnnounced || (Boolean)msgMap.alertPushed)
-						alertNow(y, (String)msg.alertmsg, false, msgMap)
+						alertNow(y, (String)msgMap.alertmsg, false, msgMap)
 						//msgMap.alertPushed=true
 						//msgMap.alertAnnounced=true
 						mListofAlertsFLD[y] = msgMap
