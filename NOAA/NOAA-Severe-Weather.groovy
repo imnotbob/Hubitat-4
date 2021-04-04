@@ -785,8 +785,10 @@ String buildTestAlert() {
 	try { alertmsg = alertmsg.replace("{alerturgency}","Immediate") }
 	catch (ignored) {}
 	try { alertmsg = alertmsg.replace("{alertheadline}","The founder, Jebediah Springfield has spotted a cloud above the nuclear power plant towers.") }
+	//try { alertmsg = alertmsg.replace("{alertheadline}","The founder, has spotted a cloud.") }
 	catch (ignored) {}
 	try { alertmsg = alertmsg.replace("{alertdescription}","The founder, Jebediah Springfield has spotted a cloud above the nuclear power plant towers.  Expect heavy polution, possible fish with three eyes, and a Simpson asleep at the console.  Also a notorius yellow haired boy is terrorizing animals with spit wads.  Be on the look out for suspicious activity.") }
+	//try { alertmsg = alertmsg.replace("{alertdescription}","The description.") }
 	catch (ignored) {}
 	try { alertmsg = alertmsg.replace("{alertinstruction}","Expect heavy polution, possible fish with three eyes, and a Simpson asleep at the console.") }
 	catch (ignored) {}
@@ -839,10 +841,17 @@ void talkNow(String alertmsg, Boolean repeatCheck) {
 		if(echospeaker && canPlay) {
 			try {
 				String tt = "serial"
-				if(echospeaker && ((List)echospeaker).size() > 1 && ((List)echospeaker)[0].hasCommand('parallelPlayAnnouncement')) {
-					echospeaker*.parallelPlayAnnouncement(alertmsg, 'NOAA Weather Alert')
-					tt = "parallel"
-				} else echospeaker*.playAnnouncement(alertmsg.toLowerCase(), 'NOAA Weather Alert', null, null)
+				if(alertmsg.size() < 420) {
+					if(echospeaker && ((List)echospeaker).size() > 1 && ((List)echospeaker)[0].hasCommand('parallelPlayAnnouncement')) {
+						echospeaker*.parallelPlayAnnouncement(alertmsg.toLowerCase(), 'NOAA Weather Alert')
+						tt = "parallel"
+						//echospeaker[0].noOp()
+					} else echospeaker*.playAnnouncement(alertmsg.toLowerCase(), 'NOAA Weather Alert', null, null)
+					tt += " announce"
+				} else {
+					tt += " speak"
+					echospeaker*.speak(alertmsg)
+				}
 
 				okT = true
 				if((Boolean)logEnable) msgs.push("Sending ${tt} alert to EchoSpeaks device(s).".toString())
@@ -910,9 +919,10 @@ void talkNow(String alertmsg, Boolean repeatCheck) {
 			alertmsg = alertmsg.toLowerCase()
 			try {
 				String tt = "serial"
-				if(speechspeaker && ((List)speechspeaker).size() > 1 && ((List)speechspeaker)[0].hasCommand('parallelSpeak')) {
+				if(speechspeaker && ((List)speechspeaker).size() > 1 && ((List)speechspeaker)[0].hasCommand('parallelSpeak') && alertmsg.size() < 420) {
 					speechspeaker*.parallelSpeak(alertmsg)
 					tt = "parallel"
+					//speechspeaker[0].noOp()
 				} else speechspeaker*.speak(alertmsg)
 
 				okT = true
@@ -947,23 +957,39 @@ void talkNow(String alertmsg, Boolean repeatCheck) {
 
 void pushNow(String alertmsg, Boolean repeatCheck) {
 	if ((Boolean)pushovertts) {
-		List fullalert = []
 		if((Boolean)logEnable) log.debug "Sending Pushover message."
 		if(repeatCheck) {
 			if(repeatTimes>1) alertmsg = "[Alert Repeat ${state.rptCount}/${state.rptNum}] " + alertmsg
 			else alertmsg = "[Alert Repeat] " + alertmsg
 		}
 
-		String m1 = alertmsg.replaceAll(/(\r\n|\r|\n|\\r\\n|\\r|\\n)+/, " ")
+		List<String> fullalert = []
+		//String m1 = alertmsg.replaceAll(/(\r\n|\r|\n|\\r\\n|\\r|\\n)+/, " ")
+		String m1 = alertmsg.replaceAll(/\s\s+/, " ")
+		List<String> subMsg = m1.tokenize()
+		Integer lsiz = subMsg.size()
+		Integer a=0
+		Integer i=0
+		while (i<lsiz){
+			String nextpart = ""
+			while (nextpart.size() < 1000 && i < lsiz) {
+				nextpart += subMsg[i] + ' '
+				i+=1
+			}
+			fullalert[a] = nextpart
+			a+=1
+		}
+
+/*
 		Integer asize=m1.length()
 		Integer a=0
 		Integer i=0
 		while (i<asize){
-			Integer end=(Math.min(asize-i, 1023))
+			Integer end=(Math.min(asize-i, 1015))
 			fullalert[a]=m1.substring(i,i+end)
 			a=a+1
 			i=i+end
-		}
+		} */
 /*		String m1 = alertmsg.replaceAll(/(\r\n|\r|\n|\\r\\n|\\r|\\n)+/, " ")
 		def m = m1 =~ /(.|[\r\n]){1,1023}\W/
 		while(m.find()) {
@@ -971,8 +997,8 @@ void pushNow(String alertmsg, Boolean repeatCheck) {
 		}*/
 
 		for(x=0;x<fullalert.size();x++) {
-			if(fullalert.size()>1) pushoverdevice.deviceNotification("(${x+1}/${fullalert.size()}) ${fullalert[x]}")
-			else pushoverdevice.deviceNotification("${fullalert[x]}")
+			if(fullalert.size()>1) pushoverdevice.deviceNotification("(${x+1}/${fullalert.size()}) "+fullalert[x])
+			else pushoverdevice.deviceNotification(fullalert[x])
 			//pauseExecution(1000)
 		}
 	}
@@ -1140,7 +1166,7 @@ Map getResponseEvents() {
 		httpGet(requestParams) { response ->
 			result = response.data
 			Integer responseCode=response.status
-			if(responseCode>=200 && responseCode<300 && resp.data){
+			if(responseCode>=200 && responseCode<300 && result){
 			} else { log.warn "The API Weather.gov get types did not return a response." }
 		}
 	}
