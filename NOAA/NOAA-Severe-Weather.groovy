@@ -15,7 +15,7 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 4/3/2021
+ * Last Update: 4/28/2021
  */
 
 static String version() { return "4.0.015" }
@@ -813,7 +813,7 @@ void talkNow(String alertmsg, Boolean repeatCheck) {
 				okT = true
 				if((Boolean)logEnable) log.debug "Sending alert to audioNotification Speaker(s)."
 			}
-			catch (ignored) { }
+			catch (ignored) {}
 		}
 		if(!okT) { log.warn "audioNotificcation device(s) ${musicspeaker} has not been selected or does not support playTextAndRestore command." }
 	}
@@ -845,7 +845,7 @@ void talkNow(String alertmsg, Boolean repeatCheck) {
 					if(echospeaker && ((List)echospeaker).size() > 1 && ((List)echospeaker)[0].hasCommand('parallelPlayAnnouncement')) {
 						echospeaker*.parallelPlayAnnouncement(alertmsg.toLowerCase(), 'NOAA Weather Alert')
 						tt = "parallel"
-						//echospeaker[0].noOp()
+						echospeaker[0].noOp()
 					} else echospeaker*.playAnnouncement(alertmsg.toLowerCase(), 'NOAA Weather Alert', null, null)
 					tt += " announce"
 				} else {
@@ -872,7 +872,7 @@ void talkNow(String alertmsg, Boolean repeatCheck) {
 					}
 				}
 			}
-			catch (ignored) { }
+			catch (ignored) {}
 		}
 		if (msgs.size() > 0 && (Boolean)logEnable) msgs.each { String msg -> log.debug msg }
 		if(!okT) { log.warn "echospeaks device(s) ${echospeaker} has not been selected or does not support playAnnouncement command." }
@@ -922,7 +922,7 @@ void talkNow(String alertmsg, Boolean repeatCheck) {
 				if(speechspeaker && ((List)speechspeaker).size() > 1 && ((List)speechspeaker)[0].hasCommand('parallelSpeak') && alertmsg.size() < 420) {
 					speechspeaker*.parallelSpeak(alertmsg)
 					tt = "parallel"
-					//speechspeaker[0].noOp()
+					speechspeaker[0].noOp()
 				} else speechspeaker*.speak(alertmsg)
 
 				okT = true
@@ -948,7 +948,7 @@ void talkNow(String alertmsg, Boolean repeatCheck) {
 					}
 					//if((Boolean)speechdelay) pauseExecution(1000)
 				}
-			} catch (ignored) { }
+			} catch (ignored) {}
 		}
 		if (msgs.size() > 0 && (Boolean)logEnable) msgs.each { String msg -> log.debug msg }
 		if(!okT) { log.warn "Speech device(s) ${speechspeaker} has not been selected or does not support speak command." }
@@ -1114,17 +1114,17 @@ Map getResponseURL(Boolean async=false) {
 				result = response.data
 				Integer responseCode=response.status
 				if(responseCode>=200 && responseCode<300 && resp.data){
-				} else { log.warn "The API Weather.gov did not return a response." }
+				} else { log.warn "The API Weather.gov did not return a response for ${wxURI}." }
 			}
 		}
-		catch (e) { if((Boolean)logEnable) log.warn "The API Weather.gov did not return a response. $e" }
+		catch (e) { if((Boolean)logEnable) log.warn "The API Weather.gov did not return a response for ${wxURI}. $e" }
 		return result
 	} else {
 		try {
 			asynchttpGet('ahttpreq', requestParams, [command: 'a'])
 			return [async:true]
 		}
-		catch (e) { log.warn "Async http failed. $e" }
+		catch (e) { log.warn "Async http failed for ${wxURI}. $e" }
 		return result
 	}
 }
@@ -1167,11 +1167,11 @@ Map getResponseEvents() {
 			result = response.data
 			Integer responseCode=response.status
 			if(responseCode>=200 && responseCode<300 && result){
-			} else { log.warn "The API Weather.gov get types did not return a response." }
+			} else { log.warn "The API Weather.gov get types did not return a response for ${wxURI}." }
 		}
 	}
 	catch (e) {
-		log.warn "The API Weather.gov get types did not return a response. $e"
+		log.warn "The API Weather.gov get types did not return a response for ${wxURI}. $e"
 	}
 	return result
 }
