@@ -2,10 +2,10 @@
    "packageName": "NOAA Weather Alerts (Latest)",
    "minimumHEVersion": "2.1.9",
    "author": "Aaron Ward",
-   "dateReleased": "2021-04-03",
-   "version": "4.0.015",
+   "dateReleased": "2021-07-09",
+   "version": "4.0.016",
    "licenseFile": "",
-   "releaseNotes": "More cleanups, improved Echo speaks support",
+   "releaseNotes": "More cleanups, improved handling of replacedAt for alerts",
    "documentationLink": "https://github.com/imnotbob/Hubitat-4/blob/master/NOAA/README.md",
    "communityLink": "https://community.hubitat.com/t/release-noaa-weather-alerts/50588",
    "apps" : [

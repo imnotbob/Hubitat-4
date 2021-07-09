@@ -15,11 +15,13 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 4/28/2021
+ * Last Update: 07/09/2021
  */
 
-static String version() { return "4.0.015" }
+static String version() { return "4.0.016" }
 
+
+import groovy.json.JsonSlurper
 import groovy.transform.Field
 //import groovy.json.*
 //import java.util.regex.*
@@ -391,7 +393,7 @@ void alertNow(Integer y, String alertmsg, Boolean repeatCheck, Map msgMap=null){
 	}
 	walertCheck(alertmsg)
 	if(alertWmatch && (String)state.alertWeatherMatch) {
-		Date dt = new Date().parse("yyyy-MM-dd'T'HH:mm:ss.SSSZ", (String)state.alertWeatherMatch)
+		Date dt = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", (String)state.alertWeatherMatch)
 		Long sec = (dt.getTime() - now()) / 1000
 		if(sec > 0L) {
 			runIn(sec, "walertCheck")
@@ -479,8 +481,8 @@ void getAlertMsgSync() {
 }
 
 void finishAlertMsg(Map result){
-	List ListofAlerts = []
-	List expireList = []
+	List<Map> ListofAlerts = []
+	List<Map> expireList = []
 
 	String myId=app.getId()
 	if(!ListofAlertsFLD[myId] && (List)state.ListofAlerts) ListofAlertsFLD[myId] = (List)state.ListofAlerts // on hub restart or code reload
@@ -493,29 +495,39 @@ void finishAlertMsg(Map result){
 		Boolean IsnewList=false
 		Date date = new Date()
 		String timestamp = date.format("yyyy-MM-dd'T'HH:mm:ssXXX")
+		Date dt1 = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", timestamp)
 
 		for(i=0; i<result.features.size();i++) {
 			Map msgMap=null
 //			debug=true
 //			alertmsg=[]
-			def alertexpires
+			String alertexpires
 
 			Map feat=(Map)((List)result.features)[i]
 			//alert expiration
-			if(feat.properties.ends) alertexpires = feat.properties.ends
-			else alertexpires = feat.properties.expires
 
-			if((Boolean)logEnable) log.debug "alertexpires ${alertexpires}       ${timestamp}  ${feat.properties.severity}  ${feat.properties.event}"
-			//if alert has expired ignore alert
+			Boolean replacedAt=false
+			Boolean useEnds=false
+			if(feat.properties.replacedAt) {
+				alertexpires = (String)feat.properties.replacedAt
+				replacedAt=true
+			} else if(feat.properties.ends) {
+				alertexpires = (String)feat.properties.ends
+				useEnds=true
+			} else alertexpires = (String)feat.properties.expires
 
 			//if specific weatheralerts is chosen
 			String t0=settings.myWeatherAlert
 			if(t0==(String)null || t0=="") msgMap = buildAlertMap(feat)
 			else if(t0.contains((String)feat.properties.event)) msgMap = buildAlertMap(feat)
 
+			Boolean expired=false
+			//if alert has expired ignore alert
+			Date dt = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", alertexpires)
+			if(dt1.getTime() > dt.getTime()) { expired=true }
+			if((Boolean)logEnable) log.debug "filtered: ${msgMap == null ? "true" : "false"} expired: ${expired}  alertexpires ${alertexpires}  replacedAt: $replacedAt useEnds: $useEnds    now: ${timestamp}  ${feat.properties.severity}  ${feat.properties.event}"
+
 			if(msgMap!=null){
-				Boolean expired=false
-				if(!(alertexpires.compareTo(timestamp)>=0)) { expired=true }
 				if(!expired || settings.debug) {
 					Boolean isNewNotice=false
 					if(mListofAlertsFLD.size() > 0) {
@@ -549,7 +561,7 @@ void finishAlertMsg(Map result){
 		ListofAlertsFLD = ListofAlertsFLD
 
 		if(ListofAlerts) {
-			if((Boolean)logEnable) log.debug "ListofAlerts is ${ListofAlerts}"
+			if((Boolean)logEnable) log.debug "ListofAlerts is (${ListofAlerts.size()}) ${ListofAlerts}"
 		} else { state.remove('ListofAlerts'); state.remove('alertAnnounced') }
 
 		if(mListofAlertsFLD) {
@@ -585,7 +597,7 @@ void finishAlertMsg(Map result){
 				runIn(1,callRefreshTile)
 			}
 		} else if((Boolean)logEnable) log.info "No new alerts.  Waiting ${whatPoll.toInteger()} minute(s) before next poll..."
-	}
+	} else if((Boolean)logEnable) log.info "null result..."
 
 	if(result!=null){ // deal with network outage; don't drop alerts.
 		if(!ListofAlerts){
@@ -604,7 +616,8 @@ void finishAlertMsg(Map result){
 Map buildAlertMap(Map result) {
 	String alertexpires
 	//build new entry for map
-	if(result.properties.ends) alertexpires = (String)result.properties.ends
+	if(result.properties.replacedAt)alertexpires = (String)result.properties.replacedAt
+	else if(result.properties.ends) alertexpires = (String)result.properties.ends
 	else alertexpires = (String)result.properties.expires
 	String alertarea
 	alertarea = (String)result.properties.areaDesc
@@ -929,7 +942,7 @@ void talkNow(String alertmsg, Boolean repeatCheck) {
 				if((Boolean)logEnable) msgs.push("Sending ${tt} alert to Speech Speaker(s)".toString())
 
 				if(supportsSetVolume) {
-					Integer speechDuration = Math.max(Math.round(alertmsg.length()/14),2)+1
+					Integer speechDuration = Math.max(Math.round(alertmsg.length()/14).toInteger(),2)+1
 					Long speechDuration2 = speechDuration * 1000L
 					if((Boolean)speechdelay) pauseExecution(speechDuration2)
 					if(speakervolRestore) {
@@ -1131,24 +1144,27 @@ Map getResponseURL(Boolean async=false) {
 
 @SuppressWarnings('unused')
 void ahttpreq(resp, Map cbD){
+	Boolean ok=false
+	def data
 	try {
 		//def t0=resp.getHeaders()
 		Integer responseCode=resp.status
 		if(responseCode>=200 && responseCode<300 && resp.data){
-			def data=resp.data
+			data=resp.data
 			if(data!=null && !(data instanceof Map)){
 				try{
-					data=(LinkedHashMap) new groovy.json.JsonSlurper().parseText((String)data)
+					data=(LinkedHashMap) new JsonSlurper().parseText((String)data)
 				}catch (ignored){
 					data=resp.data
 				}
 			}
-			finishAlertMsg(data)
+            ok=true
 
 		} else log.warn "The API Weather.gov did not return a response."
 	} catch(e) {
 		log.warn "The API Weather.gov did not return a response. (exception), $e"
 	}
+	if(ok) finishAlertMsg(data)
 	walertCheck()
 }
 
