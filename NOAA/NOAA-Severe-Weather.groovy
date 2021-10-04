@@ -15,10 +15,10 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 07/09/2021
+ * Last Update: 10/02/2021
  */
-
-static String version() { return "4.0.016" }
+//file:noinspection GroovySillyAssignment
+//file:noinspection unused
 
 
 import groovy.json.JsonSlurper
@@ -29,6 +29,23 @@ import java.text.SimpleDateFormat
 //import java.text.ParseException
 //import java.util.Date
 //import groovy.time.*
+
+
+@Field static final String appVersionFLD  = '4.0.017'
+@Field static final String sNULL          = (String)null
+@Field static final String sBLANK         = ''
+@Field static final String sSPACE         = ' '
+@Field static final String sCLRORG        = 'orange'
+@Field static final String sCLRGRY        = 'gray'
+@Field static final String sLINEBR        = '<br>'
+@Field static final String sCLRRED        = 'red'
+@Field static final String sFALSE         = 'false'
+@Field static final String sTRUE          = 'true'
+@Field static final String sBOOL          = 'bool'
+@Field static final String sENUM          = 'enum'
+@Field static final String sNUMBER        = 'number'
+@Field static final String sSMALL         = 'small'
+@Field static final String sDEBUG         = 'debug'
 
 definition(
 	name:"NOAA Weather Alerts",
@@ -45,86 +62,88 @@ definition(
 	pausable: true)
 
 preferences {
-	page name: "mainPage", title: "", install: true, uninstall: false
-	page name: "NotificationPage", title: "", install: false, uninstall: false, nextPage: "mainPage"
-	page name: "ConfigPage", title: "", install: false, uninstall: false, nextPage: "mainPage"
-	page name: "AdvConfigPage", title: "", install: false, uninstall: false, nextPage: "mainPage"
-	page name: "RestrictionsPage", title: "", install: false, uninstall: false, nextPage: "mainPage"
-	page name: "SettingsPage", title: "", install: false, uninstall: true, nextPage: "mainPage"
+	page name: "mainPage", title: sBLANK, install: true, uninstall: false
+	page name: "NotificationPage", title: sBLANK, install: false, uninstall: false, nextPage: "mainPage"
+	page name: "ConfigPage", title: sBLANK, install: false, uninstall: false, nextPage: "mainPage"
+	page name: "AdvConfigPage", title: sBLANK, install: false, uninstall: false, nextPage: "mainPage"
+	page name: "RestrictionsPage", title: sBLANK, install: false, uninstall: false, nextPage: "mainPage"
+	page name: "SettingsPage", title: sBLANK, install: false, uninstall: true, nextPage: "mainPage"
 
 }
 
-@SuppressWarnings('unused')
 def mainPage() {
+	if(settings.logInfo == null) app.updateSetting("logInfo", [value:sTRUE, type:sBOOL])
+	if(settings.logWarn == null) app.updateSetting("logWarn", [value:sTRUE, type:sBOOL])
+	if(settings.logError == null) app.updateSetting("logError", [value:sTRUE, type:sBOOL])
+
 	dynamicPage(name: "mainPage") {
 		installCheck()
 		if((String)state.appInstalled == 'COMPLETE') {
-			section(UIsupport("logo","")) {
-				if((Boolean)pushovertts || (Boolean)musicmode || (Boolean)speechmode || (Boolean)echoSpeaks2) href(name: "NotificationPage", title: "${UIsupport("configured","")} Setup Notification Device(s)", required: false, page: "NotificationPage", description: "Select TTS and PushOver Devices")
-				else href(name: "NotificationPage", title: "${UIsupport("attention","")} Setup Notification Device(s)", required: false, page: "NotificationPage", description: "Select TTS and PushOver Devices")
+			section(UIsupport("logo")) {
+				if((Boolean)settings.pushovertts || (Boolean)settings.musicmode || (Boolean)settings.speechmode || (Boolean)settings.echoSpeaks2) href(name: "NotificationPage", title: "${UIsupport("configured")} Setup Notification Device(s)", required: false, page: "NotificationPage", description: "Select TTS and PushOver Devices")
+				else href(name: "NotificationPage", title: "${UIsupport("attention")} Setup Notification Device(s)", required: false, page: "NotificationPage", description: "Select TTS and PushOver Devices")
 
-				if(whatAlertSeverity || whatPoll || alertCustomMsg) href(name: "ConfigPage", title: "${UIsupport("configured","")} Weather Alert Settings", required: false, page: "ConfigPage", description: "Change default settings for weather alerts to monitor")
-				else  href(name: "ConfigPage", title: "${UIsupport("attention","")} Weather Alert Settings", required: false, page: "ConfigPage", description: "Change default settings for weather alerts to monitor")
+				if(settings.whatAlertSeverity || settings.whatPoll || settings.alertCustomMsg) href(name: "ConfigPage", title: "${UIsupport("configured")} Weather Alert Settings", required: false, page: "ConfigPage", description: "Change default settings for weather alerts to monitor")
+				else  href(name: "ConfigPage", title: "${UIsupport("attention")} Weather Alert Settings", required: false, page: "ConfigPage", description: "Change default settings for weather alerts to monitor")
 
-				if(myWeatherAlert || whatAlertUrgency || whatAlertCertainty) href(name: "AdvConfigPage", title: "${UIsupport("configured","")} Advanced Alert Settings", required: false, page: "AdvConfigPage", description: "Add additional detailed weather settings to monitor")
+				if(settings.myWeatherAlert || settings.whatAlertUrgency || settings.whatAlertCertainty) href(name: "AdvConfigPage", title: "${UIsupport("configured")} Advanced Alert Settings", required: false, page: "AdvConfigPage", description: "Add additional detailed weather settings to monitor")
 				else href(name: "AdvConfigPage", title: "Advanced Alert Settings", required: false, page: "AdvConfigPage", description: "Add additional detailed weather settings to monitor")
 
-				if((Boolean)modesYes || (Boolean)switchYes || (Boolean)modeSeverityYes || (Boolean)pushoverttsalways) href(name: "RestrictionsPage", title: "${UIsupport("configured","")} Restrictions", required: false, page: "RestrictionsPage", description: "Setup restriction options")
+				if((Boolean)settings.modesYes || (Boolean)settings.switchYes || (Boolean)settings.modeSeverityYes || (Boolean)settings.pushoverttsalways) href(name: "RestrictionsPage", title: "${UIsupport("configured")} Restrictions", required: false, page: "RestrictionsPage", description: "Setup restriction options")
 				else href(name: "RestrictionsPage", title: "Restrictions", required: false, page: "RestrictionsPage", description: "Setup restriction options")
 				href(name: "SettingsPage", title: "Settings", required: false, page: "SettingsPage", description: "Modify NOAA Weather Alerts Application Settings, Logging, Test")
-				paragraph UIsupport("line","")
-				paragraph UIsupport("footer","")
+				paragraph UIsupport("line")
+				paragraph UIsupport("footer")
 			}
 		}
 	}
 }
 
-@SuppressWarnings('unused')
 def NotificationPage() {
 	buildEventsList()
 	dynamicPage(name: "NotificationPage") {
-		section(UIsupport("logo","")) {
+		section(UIsupport("logo")) {
 			paragraph UIsupport("header", " Setup Notification Device(s)")
 			paragraph "Select a communication(s) method, notification and restore volume levels, use a switch with advanced settings."
 			// PushOver Devices
-			input "pushovertts", "bool", title: "Use 'Pushover' device(s)?", required: false, defaultValue: false, submitOnChange: true
-			if((Boolean)pushovertts){ input "pushoverdevice", "capability.notification", title: "PushOver Device", required: true, multiple: true}
+			input "pushovertts", sBOOL, title: "Use 'Pushover' device(s)?", required: false, defaultValue: false, submitOnChange: true
+			if((Boolean)settings.pushovertts){ input "pushoverdevice", "capability.notification", title: "PushOver Device", required: true, multiple: true}
 			else app.removeSetting('pushoverdevice')
 
 			// audioNotification Music Speakers (Sonos, etc)
-			input(name: "musicmode", type: "bool", defaultValue: false, title: "Use audioNotification Speaker(s) for TTS?", description: "audioNotification Speaker(s)?", submitOnChange: true)
-			if ((Boolean)musicmode) input "musicspeaker", "capability.audioNotification", title: "Choose audioNotification speaker(s)", required: false, multiple: true, submitOnChange: true
+			input(name: "musicmode", type: sBOOL, defaultValue: false, title: "Use audioNotification Speaker(s) for TTS?", description: "audioNotification Speaker(s)?", submitOnChange: true)
+			if ((Boolean)settings.musicmode) input "musicspeaker", "capability.audioNotification", title: "Choose audioNotification speaker(s)", required: false, multiple: true, submitOnChange: true
 			else app.removeSetting('musicspeaker')
 
 			// Speech Speakers
-			input(name: "speechmode", type: "bool", defaultValue: false, title: "Use speechSynthesis Speaker(s) for TTS? (Google, Alexa TTS, etc)", description: "Speech Speaker(s)?", submitOnChange: true)
-			if ((Boolean)speechmode) {
+			input(name: "speechmode", type: sBOOL, defaultValue: false, title: "Use speechSynthesis Speaker(s) for TTS? (Google, Alexa TTS, etc)", description: "Speech Speaker(s)?", submitOnChange: true)
+			if ((Boolean)settings.speechmode) {
 				input "speechspeaker", "capability.speechSynthesis", title: "Choose speechSynthesis speaker(s)", required: false, multiple: true, submitOnChange: true
-				input(name: "speechdelay", type: "bool", defaultValue: false, title: "Place delays between commands to speechSynthesis Speaker(s)", description: "Speech Speaker(s)?", submitOnChange: true)
+				input(name: "speechdelay", type: sBOOL, defaultValue: false, title: "Place delays between commands to speechSynthesis Speaker(s)", description: "Speech Speaker(s)?", submitOnChange: true)
 			} else {
 				app.removeSetting('speechspeaker')
 				app.removeSetting('speechdelay')
 			}
 
 			// Echo Speaks devices
-			input (name: "echoSpeaks2", type: "bool", defaultValue: false, title: "Use Echo Speaks device(s) for Announcement TTS?", description: "Echo Speaks device?", submitOnChange: true)
-			if((Boolean)echoSpeaks2) input "echospeaker", "capability.musicPlayer", title: "Choose Echo Speaks Device(s)", required: false, multiple: true, submitOnChange: true
+			input (name: "echoSpeaks2", type: sBOOL, defaultValue: false, title: "Use Echo Speaks device(s) for Announcement TTS?", description: "Echo Speaks device?", submitOnChange: true)
+			if((Boolean)settings.echoSpeaks2) input "echospeaker", "capability.musicPlayer", title: "Choose Echo Speaks Device(s)", required: false, multiple: true, submitOnChange: true
 			else app.removeSetting('echospeaker')
 
 			// Master Volume settings
-			if((Boolean)echoSpeaks2 || (Boolean)speechmode || (Boolean)musicmode) input "speakervolume", "number", title: "Notification Volume Level: (Leave blank to use current volume setting)", description: "0-100%", required: false, submitOnChange: true
-			if((Boolean)echoSpeaks2 || (Boolean)speechmode) input "speakervolRestore", "number", title: "Restore Volume Level: (Leave blank to restore previous value)", description: "0-100", required: false, submitOnChange: true
+			if((Boolean)settings.echoSpeaks2 || (Boolean)settings.speechmode || (Boolean)settings.musicmode) input "speakervolume", sNUMBER, title: "Notification Volume Level: (Leave blank to use current volume setting)", description: "0-100%", required: false, submitOnChange: true
+			if((Boolean)settings.echoSpeaks2 || (Boolean)settings.speechmode) input "speakervolRestore", sNUMBER, title: "Restore Volume Level: (Leave blank to restore previous value)", description: "0-100", required: false, submitOnChange: true
 			else app.removeSetting('speakervolRestore')
 
-			if(!(Boolean)echoSpeaks2 && !(Boolean)speechmode && !(Boolean)musicmode) { app.removeSetting('speakervolRestore'); app.removeSetting('speakervolume') }
+			if(!(Boolean)settings.echoSpeaks2 && !(Boolean)settings.speechmode && !(Boolean)settings.musicmode) { app.removeSetting('speakervolRestore'); app.removeSetting('speakervolume') }
 
 			// Switch to set when alert active
-			input (name: "UsealertSwitch", type: "bool", title: "Use a switch to turn ON with Alert?", required: false, defaultValue: false, submitOnChange: true)
-			if((Boolean)UsealertSwitch) {
+			input (name: "UsealertSwitch", type: sBOOL, title: "Use a switch to turn ON with Alert?", required: false, defaultValue: false, submitOnChange: true)
+			if((Boolean)settings.UsealertSwitch) {
 				input (name: "alertSwitch", type: "capability.switch", title: "Select a switch to turn ON with Alert?", multiple: false, required: false, defaultValue: false, submitOnChange: true)
-				input (name:"alertSwitchOff", type: "bool", title: "Turn off switch when all Alerts expire?", required: false, defaultValue: false, submitOnChange: true)
-				input (name:"alertSwitchWeatherType", type: "bool", title: "Turn off switch if certain weather alert types expire?", required: false, defaultValue: false, submitOnChange: true)
-				if((Boolean)alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", "enum", title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: (List)state.eventTypes
+				input (name:"alertSwitchOff", type: sBOOL, title: "Turn off switch when all Alerts expire?", required: false, defaultValue: false, submitOnChange: true)
+				input (name:"alertSwitchWeatherType", type: sBOOL, title: "Turn off switch if certain weather alert types expire?", required: false, defaultValue: false, submitOnChange: true)
+				if((Boolean)settings.alertSwitchWeatherType) input "alertSwitchWeatherTypeWatch", sENUM, title: "Watch for a specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: (List)state.eventTypes
 			} else {
 				app.removeSetting('alertSwitch')
 				app.removeSetting('alertSwitchOff')
@@ -132,38 +151,38 @@ def NotificationPage() {
 				app.removeSetting('alertSwitchWeatherTypeWatch')
 			}
 			// Disable Tile updates
-			input (name: "disableTile", type: "bool", defaultValue: false, title: "Disable updates of Tile Device to display alerts?", description: "Disable tile device?", submitOnChange: true)
+			input (name: "disableTile", type: sBOOL, defaultValue: false, title: "Disable updates of Tile Device to display alerts?", description: "Disable tile device?", submitOnChange: true)
 		}
 	}
 }
 
-@SuppressWarnings('unused')
 def ConfigPage() {
 	dynamicPage(name: "ConfigPage") {
-		section(UIsupport("logo","")) {
+		section(UIsupport("logo")) {
 			paragraph UIsupport("header", " Alert Settings")
 			paragraph "Configure NOAA to look for specific alert severities, how often to poll for weather information, repeat alerts, use custom coordinates and customize the alert message sent to notification device(s)."
-			input name: "whatAlertSeverity", type: "enum", title: "Weather Severity(s) to gather in poll: ",
+			input name: "whatAlertSeverity", type: sENUM, title: "Weather Severity(s) to gather in poll: ",
 				options: [
 					"unknown": "Unknown",
 					"minor": "Minor",
 					"moderate": "Moderate",
 					"severe": "Severe",
 					"extreme": "Extreme"], required: true, multiple: true, defaultValue: "severe"
-			input name: "whatPoll", type: "enum", title: "Poll Frequency: ", options: ["1": "1 Minute", "5": "5 Minutes", "10": "10 Minutes", "15": "15 Minutes", "60": "60 Minutes"], required: true, multiple: false, defaultValue: "5"
-			input "repeatYes", "bool", title: "Repeat Alert?", require: false, defaultValue: false, submitOnChange: true
-			if((Boolean)repeatYes) {
-				input name:"repeatTimes", type: "number", title: "Number of times to repeat the alert?", require: false, defaultValue: 1, submitOnChange:true
-				input name:"repeatMinutes", type: "number", title: "Number of minutes between each repeating alert?", require: false, defaultValue: 15, submitOnChange:true
+//			input name:"capitalizeAlertSeverity", type: sBOOL, title: "Capitalize Severity in API calls (NOAA bug)?", require: false, defaultValue: false, submitOnChange: true
+			input name: "whatPoll", type: sENUM, title: "Poll Frequency: ", options: ["1": "1 Minute", "5": "5 Minutes", "10": "10 Minutes", "15": "15 Minutes", "60": "60 Minutes"], required: true, multiple: false, defaultValue: "5"
+			input "repeatYes", sBOOL, title: "Repeat Alert?", require: false, defaultValue: false, submitOnChange: true
+			if((Boolean)settings.repeatYes) {
+				input name:"repeatTimes", type: sNUMBER, title: "Number of times to repeat the alert?", require: false, defaultValue: 1, submitOnChange:true
+				input name:"repeatMinutes", type: sNUMBER, title: "Number of minutes between each repeating alert?", require: false, defaultValue: 15, submitOnChange:true
 			}
-			input name: "useCustomCords", type: "bool", title: "Use Custom Coordinates?", require: false, defaultValue: false, submitOnChange: true
-			if(useCustomCords) {
+			input name: "useCustomCords", type: sBOOL, title: "Use Custom Coordinates?", require: false, defaultValue: false, submitOnChange: true
+			if((Boolean)settings.useCustomCords) {
 				paragraph "Below coordinates are acquired from your Hubitat Hub. Enter your custom coordinates:"
 				input name:"customlatitude", type:"text", title: "Latitude coordinate:", require: false, defaultValue: "${location.latitude}", submitOnChange: true
 				input name:"customlongitude", type:"text", title: "Longitude coordinate:", require: false, defaultValue: "${location.longitude}", submitOnChange: true
 			}
-			input name:"useAlertIntro", type: "bool", title: "Use a pre-notification message for TTS device(s)?", require: false, defaultValue: false, submitOnChange: true
-			if((Boolean)useAlertIntro) input name:"AlertIntro", type: "text", title: "Alert pre-notification message:", require: false, defaultValue:"Attention, Attention"
+			input name:"useAlertIntro", type: sBOOL, title: "Use a pre-notification message for TTS device(s)?", require: false, defaultValue: false, submitOnChange: true
+			if((Boolean)settings.useAlertIntro) input name:"AlertIntro", type: "text", title: "Alert pre-notification message:", require: false, defaultValue:"Attention, Attention"
 			input name: "alertCustomMsg", type: "text", title: "Custom Alert Message (use customization instructions):", require: false, defaultValue: "{alertseverity} Weather Alert for the following counties: {alertarea} {alertdescription} This is the end of this Weather Announcement.", submitOnChange: true
 		}
 		section("Alert Message Customization Instructions:", hideable: true, hidden: true) {
@@ -182,23 +201,26 @@ def ConfigPage() {
 	}
 }
 
-@SuppressWarnings('unused')
 def AdvConfigPage() {
 	buildEventsList()
 	dynamicPage(name: "AdvConfigPage") {
-		section(UIsupport("logo","")) {
+		section(UIsupport("logo")) {
 			paragraph UIsupport("header", " Advanced Alert Settings")
 			paragraph "Use with caution as below settings may cause undesired results. Only select what you would like to refine in your alerts. Reference <a href='https://www.weather.gov/documentation/services-web-api?prevfmt=application%2Fcap%2Bxml/default/get_alerts#/default/get_alerts' target='_blank'>Weather.gov API</a> and use the API response test button below to determine your desired results."
-			input "myWeatherAlert", "enum", title: "Filter results for specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: (List)state.eventTypes
-			input name: "whatAlertUrgency", type: "enum", title: "Poll only for a specific Alert Urgency: ", multiple: true, submitOnChange: true,
+			input "myWeatherAlert", sENUM, title: "Filter results for specific Weather event(s)?", required: false, multiple: true, submitOnChange: true, options: (List)state.eventTypes
+			input name: "whatAlertUrgency", type: sENUM, title: "Poll only for a specific Alert Urgency: ", multiple: true, submitOnChange: true,
 				options: [
+					"unknown": "Unknown",
+					//"past": "Past",
 					"immediate": "Immediate",
 					"expected": "Expected",
 					"future": "Future"
 				]
 
-			input name: "whatAlertCertainty", type: "enum", title: "Poll only for specific Alert Certainty: ", required: false, multiple: true, submitOnChange: true,
+			input name: "whatAlertCertainty", type: sENUM, title: "Poll only for specific Alert Certainty: ", required: false, multiple: true, submitOnChange: true,
 				options: [
+					"unknown": "Unknown",
+					//"unlikely": "Unlikely",
 					"possible": "Possible",
 					"likely": "Likely",
 					"observed": "Observed"
@@ -207,108 +229,113 @@ def AdvConfigPage() {
 	}
 }
 
-@SuppressWarnings('unused')
 def RestrictionsPage() {
 	buildEventsList()
 	dynamicPage(name: "RestrictionsPage") {
-		section(UIsupport("logo","")) {
+		section(UIsupport("logo")) {
 			paragraph UIsupport("header", " Restrictions")
 			paragraph "Restrict notifications based on modes or a switch. Override restrictions if the alert is a certain severity or weather type. For notifications that are restricted, if a PushOver device is enabled alerts can still be sent but not over TTS."
-			input "modesYes", "bool", title: "Enable restriction of notifications by current mode(s)?", required: true, defaultValue: false, submitOnChange: true
-			if((Boolean)modesYes) input(name:"modes", type: "mode", title: "Restrict notifications when current mode is:", multiple: true, required: false, submitOnChange: true)
-			input "switchYes", "bool", title: "Restrict notifications using a switch?", required: true, defaultValue: false, submitOnChange: true
-			if((Boolean)switchYes) input "restrictbySwitch", "capability.switch", title: "Use a switch to restrict notfications?", required: false, multiple: false, defaultValue: null, submitOnChange: true
+			input "modesYes", sBOOL, title: "Enable restriction of notifications by current mode(s)?", required: true, defaultValue: false, submitOnChange: true
+			if((Boolean)settings.modesYes) input(name:"modes", type: "mode", title: "Restrict notifications when current mode is:", multiple: true, required: false, submitOnChange: true)
+			input "switchYes", sBOOL, title: "Restrict notifications using a switch?", required: true, defaultValue: false, submitOnChange: true
+			if((Boolean)settings.switchYes) input "restrictbySwitch", "capability.switch", title: "Use a switch to restrict notfications?", required: false, multiple: false, defaultValue: null, submitOnChange: true
 			paragraph "<br>"
 			paragraph UIsupport("header", " Overrides")
 			paragraph "<br>Below settings will ignore restrictions above based on either weather severity type or weather type."
-			input "modeSeverityYes", "bool", title: "Ignore restrictions for certain severity types?", required: false, defaultValue: false, submitOnChange: true
-			if((Boolean)modeSeverityYes) input name: "modeSeverity", type: "enum", title: "Severity option(s) that will ignore restrictions: ",
+			input "modeSeverityYes", sBOOL, title: "Ignore restrictions for certain severity types?", required: false, defaultValue: false, submitOnChange: true
+			if((Boolean)settings.modeSeverityYes) input name: "modeSeverity", type: sENUM, title: "Severity option(s) that will ignore restrictions: ",
 				options: [
 					"Minor": "Minor",
 					"Moderate": "Moderate",
 					"Severe": "Severe",
 					"Extreme": "Extreme"], required: true, multiple: true, defaultValue: "Severe"
 
-			input "modeWeatherType", "bool", title: "Ignore restrictions for certain weather types?", required: false, defaultValue: false, submitOnChange: true
+			input "modeWeatherType", sBOOL, title: "Ignore restrictions for certain weather types?", required: false, defaultValue: false, submitOnChange: true
 
-			if((Boolean)modeWeatherType) input name: "WeatherType", type: "enum", title: "Select weather type to ignore restrictions: ", required: true, multiple:true, submitOnChange: true, options: (List)state.eventTypes
+			if((Boolean)settings.modeWeatherType) input name: "WeatherType", type: sENUM, title: "Select weather type to ignore restrictions: ", required: true, multiple:true, submitOnChange: true, options: (List)state.eventTypes
 			paragraph "<hr>"
-			if((Boolean)pushovertts) input "pushoverttsalways", "bool", title: "Enable Pushover notifications even when restricted?", required: false, defaultValue: false, submitOnChange: true
+			if((Boolean)settings.pushovertts) input "pushoverttsalways", sBOOL, title: "Enable Pushover notifications even when restricted?", required: false, defaultValue: false, submitOnChange: true
 			else app.removeSetting('pushoverttsalways')
 		}
 	}
 }
 
-@SuppressWarnings('unused')
 def SettingsPage() {
 	dynamicPage(name: "SettingsPage") {
-		section(UIsupport("logo","")) {
+		section(UIsupport("logo")) {
 			paragraph UIsupport("header", " Settings")
 			paragraph "Enable logging, run a test alert, if errors reset the applications state settings and test your weather alert configurations."
-			input "logEnable", "bool", title: "Enable Debug Logging?", required: false, defaultValue: false, submitOnChange: true
-			if((Boolean)logEnable) input "logMinutes", "number", title: "Log for the following number of minutes (0=logs always on):", range: "0..300", required: false, defaultValue:15, submitOnChange: true
-			input "runTest", "bool", title: "Run a test Alert?", required: false, defaultValue: false, submitOnChange: true
-			if(runTest) {
-				app.updateSetting("runTest",[value:"false",type:"bool"])
+			input "logInfo", sBOOL, title: inTS1("Show Info Logs?", sDEBUG), required: false, defaultValue: true, submitOnChange: true
+			input "logWarn", sBOOL, title: inTS1("Show Warning Logs?", sDEBUG), required: false, defaultValue: true, submitOnChange: true
+			input "logError", sBOOL, title: inTS1("Show Error Logs?", sDEBUG), required: false, defaultValue: true, submitOnChange: true
+			input "logDebug", sBOOL, title: inTS1("Show Debug Logs?", sDEBUG), description: "Auto disables after 6 hours", required: false, defaultValue: false, submitOnChange: true
+			input "logTrace", sBOOL, title: inTS1("Show Detailed Logs?", sDEBUG), description: "Only enabled when asked to.\n(Auto disables after 6 hours)", required: false, defaultValue: false, submitOnChange: true
+
+//			input "logEnable", sBOOL, title: "Enable Debug Logging?", required: false, defaultValue: false, submitOnChange: true
+//			if((Boolean)settings.logEnable) input "logMinutes", sNUMBER, title: "Log for the following number of minutes (0=logs always on):", range: "0..300", required: false, defaultValue:15, submitOnChange: true
+			if((Boolean)settings.logDebug || (Boolean)settings.logTrace || (Boolean)settings.logInfo) input "logMinutes", sNUMBER, title: "Log for the following number of minutes (0=logs always on):", range: "0..300", required: false, defaultValue:15, submitOnChange: true
+			input "runTest", sBOOL, title: "Run a test Alert?", required: false, defaultValue: false, submitOnChange: true
+			if((Boolean)settings.runTest) {
+				app.updateSetting("runTest",[value:sFALSE,type:sBOOL])
 				app.removeSetting('runTest')
 				runtestAlert()
 			}
-			input "init", "bool", title: "Reset current application state?", required: false, defaultValue: false, submitOnChange: true
-			if(init) {
-				app.updateSetting("init",[value:"false",type:"bool"])
+			input "init", sBOOL, title: "Reset current application state?", required: false, defaultValue: false, submitOnChange: true
+			if((Boolean)settings.init) {
+				app.updateSetting("init",[value:sFALSE,type:sBOOL])
 				app.removeSetting("init")
 				unschedule()
-				log.warn "NOAA Weather Alerts application state is being reset."
+				logWarn "NOAA Weather Alerts application state is being reset."
 				initialize()
 			}
-			input "debug", "bool", title: "Debug alert configuration - if expired alerts are available, use those alerts? (only enable this with the test config option below)", required: false, defaultValue: false, submitOnChange: true
-			input "getAPI", "bool", title: "Test alert configuration and display weather.gov API response?", required: false, defaultValue: false, submitOnChange: true
-			if(getAPI) {
+			input "debug", sBOOL, title: "Debug alert configuration - if expired alerts are available, use those alerts? (only enable this with the test config option below)", required: false, defaultValue: false, submitOnChange: true
+			input "getAPI", sBOOL, title: "Test alert configuration and display weather.gov API response?", required: false, defaultValue: false, submitOnChange: true
+			if((Boolean)settings.getAPI) {
 				getAlertMsgSync()
-				app.updateSetting("getAPI",[value:"false",type:"bool"])
+				app.updateSetting("getAPI",[value:sFALSE,type:sBOOL])
 				app.removeSetting("getAPI")
-				app.updateSetting("debug",[value:"false",type:"bool"])
+				app.updateSetting("debug",[value:sFALSE,type:sBOOL])
 				app.removeSetting("debug")
 
 				String myId=app.getId()
 				if(!ListofAlertsFLD[myId] && (List)state.ListofAlerts) ListofAlertsFLD[myId] = (List)state.ListofAlerts // on hub restart or code reload
 				List<Map>mListofAlertsFLD = ListofAlertsFLD[myId]
 				if(mListofAlertsFLD) {
-					Boolean restrictionSwitch = ((Boolean)switchYes && restrictbySwitch != null && restrictbySwitch.currentState("switch").value == "on")
-					Boolean restrictionMode = ((Boolean)modesYes && modes != null && modes.contains(location.mode))
-					Boolean overrideRestSeverity = ((Boolean)modeSeverityYes && modeSeverity != null)
-					Boolean overrideRestWeather = ((Boolean)modeWeatherType && WeatherType != null)
-					//Boolean alertSwitchReset = ((Boolean)alertSwitchWeatherType && alertSwitchWeatherTypeWatch != null && alertSwitchWeatherTypeWatch.contains(mListofAlertsFLD[0].alertevent))
+					Boolean restrictionSwitch = ((Boolean)settings.switchYes && settings.restrictbySwitch != null && settings.restrictbySwitch.currentState("switch").value == "on")
+					Boolean restrictionMode = ((Boolean)settings.modesYes && settings.modes != null && settings.modes.contains(location.mode))
+					Boolean overrideRestSeverity = ((Boolean)settings.modeSeverityYes && settings.modeSeverity != null)
+					Boolean overrideRestWeather = ((Boolean)settings.modeWeatherType && settings.WeatherType != null)
+					//Boolean alertSwitchReset = ((Boolean)settings.alertSwitchWeatherType && (List)settings.alertSwitchWeatherTypeWatch && ((List)settings.alertSwitchWeatherTypeWatch).contains(mListofAlertsFLD[0].alertevent))
 					//def testresult = (!(result || result2) || result3 || result4) ? true : false
 					Date date = new Date()
 					SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy h:mm a")
-					String testConfig = ""
-					String customMsg = alertCustomMsg
-					if((Boolean)useAlertIntro) customMsg = AlertIntro+', '+alertCustomMsg
+					String testConfig = sBLANK
+					String customMsg = (String)settings.alertCustomMsg
+					if((Boolean)settings.useAlertIntro) customMsg = (String)settings.AlertIntro+', '+(String)settings.alertCustomMsg
 
 					temp = "<hr><br>Current poll of Weather API: ${sdf.format(date)}<br/><br/>URI: <a href='${state.wxURI}' target=_blank>${state.wxURI}</a><br><br>AlertMSG Built based on configuration:<br><br>${customMsg}<br><br>"
 					temp += "<table border=0><tr colspan=2><td>Current Restriction Settings:</td></tr>"
-					temp += "<tr><td>Switch:</td><td>${restrictionSwitch ? "Active for ${restrictbySwitch}" : "Inactive"}</td></tr>"
-					temp += "<tr><td>Mode:</td><td>${restrictionMode ? "Active for ${modes}" : "Inactive"}</td></tr>"
-					temp += "<tr><td>Severity Overrides Restrictions:</td><td>${overrideRestSeverity ? "Enabled for ${modeSeverity}" : "Disabled"}</td></tr>"
-					temp += "<tr><td>Weather Type Overrides Restrictions:</td><td>${overrideRestWeather ? "Enabled for ${WeatherType}" : "Disabled"}</td></tr></table></br>"
+					temp += "<tr><td>Switch:</td><td>${restrictionSwitch ? "Active for ${settings.restrictbySwitch}" : "Inactive"}</td></tr>"
+					temp += "<tr><td>Mode:</td><td>${restrictionMode ? "Active for ${settings.modes}" : "Inactive"}</td></tr>"
+					temp += "<tr><td>Severity Overrides Restrictions:</td><td>${overrideRestSeverity ? "Enabled for ${settings.modeSeverity}" : "Disabled"}</td></tr>"
+					temp += "<tr><td>Weather Type Overrides Restrictions:</td><td>${overrideRestWeather ? "Enabled for ${settings.WeatherType}" : "Disabled"}</td></tr></table></br>"
 					paragraph temp
 					for(y=0;y<mListofAlertsFLD.size();y++) {
 						String testalertmsg
-						overrideRestSeverity = ((Boolean)modeSeverityYes && modeSeverity != null && modeSeverity.contains(mListofAlertsFLD[y].alertseverity))
-						overrideRestWeather = ((Boolean)modeWeatherType && WeatherType != null && WeatherType.contains(mListofAlertsFLD[y].alertevent))
+						overrideRestSeverity = ((Boolean)settings.modeSeverityYes && settings.modeSeverity != null && ((List)settings.modeSeverity).contains(mListofAlertsFLD[y].alertseverity))
+						overrideRestWeather = ((Boolean)settings.modeWeatherType && settings.WeatherType != null && settings.WeatherType.contains(mListofAlertsFLD[y].alertevent))
 						if(!restrictionSwitch && !restrictionMode && !overrideRestSeverity && !overrideRestWeather) {
-						//if((!restrictionSwitch || !restrictionMode) && (!(Boolean)modeSeverityYes || !(Boolean)modeWeatherType)) {
-							if((Boolean)pushovertts) testalertmsg = "alert would be announced on TTS and PushOver device(s)."
+						//if((!restrictionSwitch || !restrictionMode) && (!(Boolean)settings.modeSeverityYes || !(Boolean)settings.modeWeatherType)) {
+							if((Boolean)settings.pushovertts) testalertmsg = "alert would be announced on TTS and PushOver device(s)."
 							else testalertmsg = "alert would be announced on TTS device(s)."
 							testalertmsg += " No restricitons active."
 						}else{
 							if (overrideRestSeverity || overrideRestWeather) {
-								if((Boolean)pushovertts) testalertmsg = "alert would be announced on TTS and PushOver device(s)"
+								if((Boolean)settings.pushovertts) testalertmsg = "alert would be announced on TTS and PushOver device(s)"
 								else testalertmsg = "alert would be announced only on TTS device(s)"
 								testalertmsg += " - Restrictions override active."
 							}else{
-								if((Boolean)pushovertts && (Boolean)pushoverttsalways) testalertmsg = "alert would be announced only on PushOver device(s). Alert restricted with pushover always override."
+								if((Boolean)settings.pushovertts && (Boolean)settings.pushoverttsalways) testalertmsg = "alert would be announced only on PushOver device(s). Alert restricted with pushover always override."
 								else testalertmsg = "alert would not be announced. Alert restricted."
 							}
 						}
@@ -343,7 +370,6 @@ def main() {
 	issueGetAlertMsg()
 }
 
-@SuppressWarnings('unused')
 void callRefreshTile(){
 	def noaaTile = getChildDevice("NOAA")
 	if(noaaTile) noaaTile.refreshTile()
@@ -355,39 +381,39 @@ void alertNow(Integer y, String alertmsg, Boolean repeatCheck, Map msgMap=null){
 	List<Map> mListofAlertsFLD = ListofAlertsFLD[myId]
 
 	// check restrictions based on Modes and Switches
-	Boolean restrictionSwitch = ((Boolean)switchYes && restrictbySwitch != null && restrictbySwitch.currentState("switch").value == "on")
-	Boolean restrictionMode = ((Boolean)modesYes && modes != null && modes.contains(location.mode))
-	Boolean overrideRestSeverity = (y!=null && (Boolean)modeSeverityYes && modeSeverity != null && mListofAlertsFLD && modeSeverity.contains(mListofAlertsFLD[y]?.alertseverity))
-	Boolean overrideRestWeather = (y!=null && (Boolean)modeWeatherType && WeatherType != null && mListofAlertsFLD && WeatherType.contains(mListofAlertsFLD[y]?.alertevent))
-	if((Boolean)logEnable) log.debug "Restrictions on?  Modes: ${restrictionMode}, Switch: ${restrictionSwitch}, Severity Override: ${overrideRestSeverity}, Weather Type Override: ${overrideRestWeather}"
+	Boolean restrictionSwitch = ((Boolean)settings.switchYes && settings.restrictbySwitch != null && settings.restrictbySwitch.currentState("switch").value == "on")
+	Boolean restrictionMode = ((Boolean)settings.modesYes && settings.modes != null && settings.modes.contains(location.mode))
+	Boolean overrideRestSeverity = (y!=null && (Boolean)settings.modeSeverityYes && settings.modeSeverity != null && mListofAlertsFLD && ((List)settings.modeSeverity).contains(mListofAlertsFLD[y]?.alertseverity))
+	Boolean overrideRestWeather = (y!=null && (Boolean)settings.modeWeatherType && settings.WeatherType != null && mListofAlertsFLD && settings.WeatherType.contains(mListofAlertsFLD[y]?.alertevent))
+	logDebug "Restrictions on?  Modes: ${restrictionMode}, Switch: ${restrictionSwitch}, Severity Override: ${overrideRestSeverity}, Weather Type Override: ${overrideRestWeather}"
 
 	Boolean alertWmatch = false
-	if(alertmsg!=(String)null){
+	if(alertmsg!=sNULL){
 		// no restrictions
-		if((Boolean)UsealertSwitch && alertSwitch && (Boolean)alertSwitchWeatherType && alertSwitchWeatherTypeWatch && mListofAlertsFLD && y!=null &&
-				alertSwitchWeatherTypeWatch.contains(mListofAlertsFLD[y].alertevent) ) alertWmatch=true
+		if((Boolean)settings.UsealertSwitch && settings.alertSwitch && (Boolean)settings.alertSwitchWeatherType && (List)settings.alertSwitchWeatherTypeWatch && mListofAlertsFLD && y!=null &&
+				((List)settings.alertSwitchWeatherTypeWatch).contains(mListofAlertsFLD[y].alertevent) ) alertWmatch=true
 
-		if(!restrictionSwitch && !restrictionMode && !overrideRestSeverity && !overrideRestWeather) {//(!(Boolean)modeSeverityYes && !(Boolean)modeWeatherType)) {
-			if((Boolean)logEnable) log.info "Sending alert: ${alertmsg}"
+		if(!restrictionSwitch && !restrictionMode && !overrideRestSeverity && !overrideRestWeather) {//(!(Boolean)settings.modeSeverityYes && !(Boolean)settings.modeWeatherType)) {
+			logInfo "Sending alert: ${alertmsg}"
 			if (!msgMap || (msgMap && !(Boolean)msgMap.alertPushed)) pushNow(alertmsg, repeatCheck)
 			if(msgMap) { msgMap.alertPushed=true; msgMap.alertAnnounced=true }
-			if((Boolean)UsealertSwitch && alertSwitch) alertSwitch.on()
+			if((Boolean)settings.UsealertSwitch && settings.alertSwitch) settings.alertSwitch.on()
 			if(alertWmatch) state.alertWeatherMatch = (String)mListofAlertsFLD[y].alertexpires
 			talkNow(alertmsg, repeatCheck)
 		}else{
 			if(overrideRestSeverity || overrideRestWeather) {
-				if((Boolean)logEnable) log.info "Sending alert (override active): ${alertmsg}"
+				logInfo "Sending alert (override active): ${alertmsg}"
 				if (!msgMap || (msgMap && !(Boolean)msgMap.alertPushed)) pushNow(alertmsg, repeatCheck)
 				if(msgMap) { msgMap.alertPushed=true; msgMap.alertAnnounced=true }
-				if((Boolean)UsealertSwitch && alertSwitch) alertSwitch.on()
+				if((Boolean)settings.UsealertSwitch && settings.alertSwitch) settings.alertSwitch.on()
 				if(alertWmatch) state.alertWeatherMatch = (String)mListofAlertsFLD[y].alertexpires
 				talkNow(alertmsg, repeatCheck)
 			}else{
-				if((Boolean)pushoverttsalways) {
-					if((Boolean)logEnable) log.info "Sending alert to pushover, Restrictions are enabled but PushoverTTS always override enabled: ${alertmsg}"
+				if((Boolean)settings.pushoverttsalways) {
+					logInfo "Sending alert to pushover, Restrictions are enabled but PushoverTTS always override enabled: ${alertmsg}"
 					if (!msgMap || (msgMap && !(Boolean)msgMap.alertPushed)) pushNow(alertmsg, repeatCheck)
 					if(msgMap) { msgMap.alertPushed=true }
-				}else if((Boolean)logEnable) log.info "Not sending alert, Restrictions are enabled."
+				}else logDebug "Not sending alert, Restrictions are enabled."
 			}
 		}
 	}
@@ -397,7 +423,7 @@ void alertNow(Integer y, String alertmsg, Boolean repeatCheck, Map msgMap=null){
 		Long sec = (dt.getTime() - now()) / 1000
 		if(sec > 0L) {
 			runIn(sec, "walertCheck")
-			log.info "Scheduling check in $sec seconds:"
+			logDebug "Scheduling check in $sec seconds:"
 		}
 	}
 }
@@ -411,58 +437,58 @@ void walertCheck(String alertmsg="a"){
 	if((String)state.alertWeatherMatch) {
 		Boolean alertReset = true
 		for(y=0;y<mListofAlertsFLD.size();y++) {
-			if((Boolean)UsealertSwitch && alertSwitch && (Boolean)alertSwitchWeatherType && alertSwitchWeatherTypeWatch && mListofAlertsFLD && y!=null &&
-				alertSwitchWeatherTypeWatch.contains(mListofAlertsFLD[y].alertevent) ) alertReset=false
+			if((Boolean)settings.UsealertSwitch && settings.alertSwitch && (Boolean)settings.alertSwitchWeatherType && (List)settings.alertSwitchWeatherTypeWatch && mListofAlertsFLD && y!=null &&
+					((List)settings.alertSwitchWeatherTypeWatch).contains(mListofAlertsFLD[y].alertevent) ) alertReset=false
 		}
-		if(alertReset) { state.alertWeatherMatch=(String)null; alertSwitchReset=true }
+		if(alertReset) { state.alertWeatherMatch=sNULL; alertSwitchReset=true }
 	}
-	if((alertSwitchReset || alertmsg==(String)null) && (Boolean)UsealertSwitch && alertSwitch && ((Boolean)alertSwitchOff || alertSwitchReset)){
-		if((Boolean)UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on"){
+	if((alertSwitchReset || alertmsg==sNULL) && (Boolean)settings.UsealertSwitch && settings.alertSwitch && ((Boolean)settings.alertSwitchOff || alertSwitchReset)){
+		if((Boolean)settings.UsealertSwitch && settings.alertSwitch && settings.alertSwitch.currentState("switch").value == "on"){
 			String amsg="turning off switch due to: "
 			if(alertSwitchReset) amsg += "weather alert ended"
 			else amsg+= "alerts ended"
-			log.info amsg
-			alertSwitch.off()
+			logInfo amsg
+			settings.alertSwitch.off()
 		}
 	}
-	if((alertSwitchReset || alertmsg==(String)null)){
-		state.alertWeatherMatch=(String)null
+	if((alertSwitchReset || alertmsg==sNULL)){
+		state.alertWeatherMatch=sNULL
 		unschedule(walertCheck)
 	}
 }
 
 void repeatNow(Boolean newmsg=false){
 	Boolean doRefresh=true
-	if((Boolean)repeatYes && (String)state.repeatmsg && repeatMinutes > 0) {
+	if((Boolean)settings.repeatYes && (String)state.repeatmsg && settings.repeatMinutes > 0) {
 		if(!newmsg && state.rptCount >= state.rptNum){
 			state.repeat = false
-			state.repeatmsg = (String)null
-			if((Boolean)logEnable) log.debug "Finished repeating alerts."
+			state.repeatmsg = sNULL
+			logTrace "Finished repeating alerts."
 		}else{
 			if(newmsg){
 				state.rptCount = 0
-				state.rptNum = repeatTimes!=null ? repeatTimes.toInteger() : 1
+				state.rptNum = settings.repeatTimes ? (Integer)settings.repeatTimes : 1
 				state.repeat = true
 				doRefresh=false
-				if((Boolean)logEnable) log.debug "Starting repeating alerts."
+				logTrace "Starting repeating alerts."
 			}else{
 				if((Boolean)state.repeat) {
-					if((Boolean)logEnable) log.debug "Sending repeat message"
+					logTrace "Sending repeat message"
 					alertNow(0, (String)state.repeatmsg, true)
 					//runIn(1,callRefreshTile)
 				}
 			}
 			if((Boolean)state.repeat && (Integer)state.rptCount < (Integer)state.rptNum){
 				state.rptCount = (Integer)state.rptCount + 1
-				if((Boolean)logEnable) log.debug "Scheduling repeating alert in ${repeatMinutes} minute(s). This is ${state.rptCount}/${state.rptNum} repeated alert(s). Repeat State: ${state.repeat}"
-				runIn(repeatMinutes.toInteger()*60,repeatNow)
+				logTrace "Scheduling repeating alert in ${settings.repeatMinutes} minute(s). This is ${state.rptCount}/${state.rptNum} repeated alert(s). Repeat State: ${state.repeat}"
+				runIn((Integer)settings.repeatMinutes*60,repeatNow)
 			}
 		}
 	}else{
-		if((Boolean)logEnable) log.debug "Repeat not enabled or no message Enabled: $repeatYes msg: $state.repeatmsg State: ${state.repeat} Minutes: ${repeatMinutes}"
+		logTrace "Repeat not enabled or no message Enabled: ${settings.repeatYes} msg: $state.repeatmsg State: ${state.repeat} Minutes: ${settings.repeatMinutes}"
 		//match state
 		state.repeat = false
-		state.repeatmsg = (String)null
+		state.repeatmsg = sNULL
 		//runIn(1,callRefreshTile)
 	}
 	if(doRefresh) runIn(1,callRefreshTile)
@@ -517,18 +543,18 @@ void finishAlertMsg(Map result){
 			} else alertexpires = (String)feat.properties.expires
 
 			//if specific weatheralerts is chosen
-			String t0=settings.myWeatherAlert
-			if(t0==(String)null || t0=="") msgMap = buildAlertMap(feat)
+			List<String> t0=(List<String>)settings.myWeatherAlert
+			if(!t0) msgMap = buildAlertMap(feat)
 			else if(t0.contains((String)feat.properties.event)) msgMap = buildAlertMap(feat)
 
 			Boolean expired=false
 			//if alert has expired ignore alert
 			Date dt = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", alertexpires)
 			if(dt1.getTime() > dt.getTime()) { expired=true }
-			if((Boolean)logEnable) log.debug "filtered: ${msgMap == null ? "true" : "false"} expired: ${expired}  alertexpires ${alertexpires}  replacedAt: $replacedAt useEnds: $useEnds    now: ${timestamp}  ${feat.properties.severity}  ${feat.properties.event}"
+			logTrace "filtered: ${msgMap == null ? sTRUE : sFALSE} expired: ${expired}  alertexpires ${alertexpires}  replacedAt: $replacedAt useEnds: $useEnds    now: ${timestamp}  ${feat.properties.severity}  ${feat.properties.event}"
 
 			if(msgMap!=null){
-				if(!expired || settings.debug) {
+				if(!expired || (Boolean)settings.debug) {
 					Boolean isNewNotice=false
 					if(mListofAlertsFLD.size() > 0) {
 						Map fndMsg = (Map)mListofAlertsFLD.find { ((String)it.alertid).contains((String)msgMap.alertid) }
@@ -538,10 +564,9 @@ void finishAlertMsg(Map result){
 						isNewNotice = true
 						IsnewList = true
 					}
-					if((Boolean)logEnable){
-						if(isNewNotice) log.debug "Valid ${msgMap.alertid} is new in ListofAlerts: ${IsnewList}"
-						else log.debug "Valid ${msgMap.alertid} exists in ListofAlerts"
-					}
+					if(isNewNotice) logDebug "Valid ${msgMap.alertid} is new in ListofAlerts: ${IsnewList}"
+					else logDebug "Valid ${msgMap.alertid} exists in ListofAlerts"
+
 					if(isNewNotice){ msgMap.alertPushed=false; msgMap.alertAnnounced = false }
 					msgMap.expired=expired
 					ListofAlerts << msgMap
@@ -561,7 +586,7 @@ void finishAlertMsg(Map result){
 		ListofAlertsFLD = ListofAlertsFLD
 
 		if(ListofAlerts) {
-			if((Boolean)logEnable) log.debug "ListofAlerts is (${ListofAlerts.size()}) ${ListofAlerts}"
+			logDebug "ListofAlerts is (${ListofAlerts.size()}) ${ListofAlerts}"
 		} else { state.remove('ListofAlerts'); state.remove('alertAnnounced') }
 
 		if(mListofAlertsFLD) {
@@ -579,14 +604,14 @@ void finishAlertMsg(Map result){
 						ListofAlertsFLD[myId] = mListofAlertsFLD
 						ListofAlertsFLD=ListofAlertsFLD
 						state.ListofAlerts = mListofAlertsFLD
-						if(!everDid && (Boolean)repeatYes && !fixedRepeat){
+						if(!everDid && (Boolean)settings.repeatYes && !fixedRepeat){
 							fixedRepeat=true
 							state.repeatmsg = (String)msgMap.alertmsg
 							repeatNow(true)
 						}
 						schedTile=true
 					}
-					if((Boolean)repeatYes && !fixedRepeat){
+					if((Boolean)settings.repeatYes && !fixedRepeat){
 						fixedRepeat=true
 						if((String)state.repeatmsg != (String)msgMap.alertmsg) schedTile=true
 						state.repeatmsg = (String)msgMap.alertmsg // in case messages moved around in order
@@ -596,19 +621,19 @@ void finishAlertMsg(Map result){
 			if(schedTile) {
 				runIn(1,callRefreshTile)
 			}
-		} else if((Boolean)logEnable) log.info "No new alerts.  Waiting ${whatPoll.toInteger()} minute(s) before next poll..."
-	} else if((Boolean)logEnable) log.info "null result..."
+		} else logDebug "No new alerts.  Waiting ${settings.whatPoll.toInteger()} minute(s) before next poll..."
+	} else logDebug "null result..."
 
 	if(result!=null){ // deal with network outage; don't drop alerts.
 		if(!ListofAlerts){
-			if(hadAlerts && (Boolean)logEnable) log.debug "ending alerts"
-			if((Boolean)UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow(null, (String)null, false) // maybe Switch.off()
+			if(hadAlerts) logDebug "ending alerts"
+			if((Boolean)settings.UsealertSwitch && settings.alertSwitch && settings.alertSwitch.currentState("switch").value == "on") alertNow(null, sNULL, false) // maybe Switch.off()
 			if((Boolean)state.repeat){
 				unschedule(repeatNow)
 				runIn(1,callRefreshTile)
 			}
 			state.repeat = false
-			state.repeatmsg = (String)null
+			state.repeatmsg = sNULL
 		}
 	}
 }
@@ -642,7 +667,7 @@ Map buildAlertMap(Map result) {
 		alertinstruction = alertFormatText(alertinstruction)
 	}
 	String alertmsg
-	alertmsg = alertCustomMsg
+	alertmsg = (String)settings.alertCustomMsg
 	try {alertmsg = alertmsg.replace("{alertarea}","${alertarea}") }
 	  catch (ignored) {}
 	try {alertmsg = alertmsg.replace("{alertseverity}","${result.properties.severity}") }
@@ -724,34 +749,34 @@ static String alertFormatStates(String msg) {
 
 static String alertRemoveTimeZone(String msg) {
 	// Remove Timezones
-	return msg.replaceAll(/(AST|EST|EDT|CST|CDT|MST|MDT|PST|PDT|AKST|AKDT|HST|HAST|HADT)/,"")
+	return msg.replaceAll(/(AST|EST|EDT|CST|CDT|MST|MDT|PST|PDT|AKST|AKDT|HST|HAST|HADT)/,sBLANK)
 }
 
 static String alertRemoveStates(String msg) {
-	return msg.replaceAll(/(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IA|IN|KS|KY|LA|ME|MA|MD|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)/, "")
+	return msg.replaceAll(/(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IA|IN|KS|KY|LA|ME|MA|MD|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)/, sBLANK)
 }
 
 static String alertFormatText(String msg) {
 	msg = msg.replaceAll(/NWS/,"the National Weather Service of")
-	msg = msg.replaceAll(/(WHAT|WHEN|IMPACTS|IMPACT|WHERE|INCLUDES|HAZARDS|INCLUDE|HAZARD|TEMPERATURE|SOURCE)/, "")
-	msg = msg.replaceAll(/\.{2,}/, "")
-	msg = msg.replaceAll(/\*/, "")
+	msg = msg.replaceAll(/(WHAT|WHEN|IMPACTS|IMPACT|WHERE|INCLUDES|HAZARDS|INCLUDE|HAZARD|TEMPERATURE|SOURCE)/, sBLANK)
+	msg = msg.replaceAll(/\.{2,}/, sBLANK)
+	msg = msg.replaceAll(/\*/, sBLANK)
 	msg = msg.replaceAll(/MPH/, "miles per hour")
 	msg = msg.replaceAll("","")
-	msg = msg.replaceAll("\n"," ")
-	msg = msg.replaceAll("\\s+", " ")
+	msg = msg.replaceAll("\n",sSPACE)
+	msg = msg.replaceAll("\\s+", sSPACE)
 	msg = msg.replaceAll(/(?:(\d{2})(\d{2}))|(?:(\d(?!\d{3}))(\d{2}))(?=\s?(?i:am|pm))/,'$1$3:$2$4')
 	return msg
 }
 
 static String alertFormatArea(String msg) {
 	msg.replaceAll(/NWS/,"the National Weather Service of")
-	msg = msg.replaceAll(", ","")
-	msg = msg.replaceAll(",","")
+	msg = msg.replaceAll(", ",sBLANK)
+	msg = msg.replaceAll(",",sBLANK)
 	msg = msg.replaceAll(";",",")
 	msg = msg.replaceAll("\n"," ")
-	msg = msg.replaceAll("\\s+", " ")
-	msg = msg.replaceAll("/","")
+	msg = msg.replaceAll("\\s+", sSPACE)
+	msg = msg.replaceAll("/",sBLANK)
 	StringBuffer buffer = new StringBuffer(msg)
 	msg = buffer.reverse().toString().replaceFirst(",","dna ")
 	msg = new StringBuffer(msg).reverse().toString()
@@ -763,12 +788,12 @@ static String alertFormatArea(String msg) {
 void runtestAlert() {
 	atomicState.testmsg = true
 	Integer endTime=30
-	if((Boolean)logEnable) log.debug "Initiating a test alert."
+	logInfo "Initiating a test alert."
 	String msg=buildTestAlert()
 	state.repeatmsg=msg
 	alertNow(null, msg, false)
-	if((Boolean)repeatYes){
-		if((Boolean)logEnable) log.debug "Initiating a repeat process (ends in 5 minutes) for test alert."
+	if((Boolean)settings.repeatYes){
+		logInfo "Initiating a repeat process (ends in 5 minutes) for test alert."
 		state.repeat=false
 		repeatNow(true)
 		endTime=300
@@ -776,19 +801,18 @@ void runtestAlert() {
 	runIn(endTime,endTest)
 }
 
-@SuppressWarnings('unused')
 void endTest(){
-	if((Boolean)logEnable) log.debug "Ending repeat for test alert."
+	logInfo "Ending repeat for test alert."
 	atomicState.testmsg = false
-	if((Boolean)UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow(null, (String)null, false) // maybe Switch.off()
+	if((Boolean)settings.UsealertSwitch && settings.alertSwitch && settings.alertSwitch.currentState("switch").value == "on") alertNow(null, sNULL, false) // maybe Switch.off()
 	state.repeat = false
-	state.repeatmsg = (String)null
+	state.repeatmsg = sNULL
 	unschedule(repeatNow)
 	runIn(1,callRefreshTile)
 }
 
 String buildTestAlert() {
-	String alertmsg = alertCustomMsg
+	String alertmsg = (String)settings.alertCustomMsg
 	try { alertmsg = alertmsg.replace("{alertarea}","Springfield County.") }
 	catch (ignored) {}
 	try { alertmsg = alertmsg.replace("{alertseverity}","Severe") }
@@ -813,73 +837,75 @@ String buildTestAlert() {
 // Common Notifcation Routines
 void talkNow(String alertmsg, Boolean repeatCheck) {
 	if(repeatCheck) {
-		if((Boolean)useAlertIntro) alertmsg = "Repeating previous alert,, ${AlertIntro} " + alertmsg
+		if((Boolean)settings.useAlertIntro) alertmsg = "Repeating previous alert,, ${settings.AlertIntro} " + alertmsg
 		else alertmsg = "Repeating previous alert,," + alertmsg
-	}else if((Boolean)useAlertIntro) alertmsg = "${AlertIntro}, " + alertmsg
+	}else if((Boolean)settings.useAlertIntro) alertmsg = "${settings.AlertIntro}, " + alertmsg
 
-	if((Boolean)musicmode) {
-		if((Boolean)logEnable) log.debug "Using audioNotification $musicspeaker"
+	if((Boolean)settings.musicmode) {
+		List mspks = (List)settings.musicspeaker
+		logDebug "Using audioNotification $mspks"
 		Boolean okT = false
-		if(musicspeaker && ((List)musicspeaker)[0].hasCommand('playTextAndRestore')) {
+		if(mspks && mspks[0].hasCommand('playTextAndRestore')) {
 			try {
-				musicspeaker*.playTextAndRestore(alertmsg.toLowerCase(), speakervolume)
+				mspks*.playTextAndRestore(alertmsg.toLowerCase(), settings.speakervolume)
 				okT = true
-				if((Boolean)logEnable) log.debug "Sending alert to audioNotification Speaker(s)."
+				logInfo "Sending alert to audioNotification Speaker(s)."
 			}
 			catch (ignored) {}
 		}
-		if(!okT) { log.warn "audioNotificcation device(s) ${musicspeaker} has not been selected or does not support playTextAndRestore command." }
+		if(!okT) { logWarn "audioNotificcation device(s) ${mspks} has not been selected or does not support playTextAndRestore command." }
 	}
 
-	if((Boolean)echoSpeaks2) {
-		if((Boolean)logEnable) log.debug "Using echoSpeaks $echospeaker"
+	if((Boolean)settings.echoSpeaks2) {
+		List spks = (List)settings.echospeaker
+		logDebug "Using echoSpeaks ${spks}"
 		Boolean supportsSetVolume=false
 		List<String> msgs = []
 		List svVols = []
-		Boolean canPlay = ((List)echospeaker)[0].hasCommand('playAnnouncement')
-		if(speakervolume && canPlay && echospeaker && ((List)echospeaker)[0].hasCommand('setVolume')) {
-			if(!speakervolRestore) {
-				((List)echospeaker).each { dev ->
+		Boolean canPlay = spks[0].hasCommand('playAnnouncement')
+		if(settings.speakervolume && canPlay && spks && spks[0].hasCommand('setVolume')) {
+			if(!settings.speakervolRestore) {
+				spks.each { dev ->
 					def a = dev?.currentState('volume')?.value
 					svVols.push(a)
 				}
 			}
 			try {
-				echospeaker*.setVolume(speakervolume)
+				spks*.setVolume(settings.speakervolume)
 				supportsSetVolume=true
-				if((Boolean)logEnable) msgs.push("Setting Echo Speaker to volume level: ${speakervolume}".toString())
-			} catch (ignored) { log.warn "unable to set volume" }
+				msgs.push("Setting Echo Speaker to volume level: ${settings.speakervolume}".toString())
+			} catch (e) { logError "unable to set volume", e }
 		}
 		Boolean okT = false
-		if(echospeaker && canPlay) {
+		if(spks && canPlay) {
 			try {
 				String tt = "serial"
 				if(alertmsg.size() < 420) {
-					if(echospeaker && ((List)echospeaker).size() > 1 && ((List)echospeaker)[0].hasCommand('parallelPlayAnnouncement')) {
-						echospeaker*.parallelPlayAnnouncement(alertmsg.toLowerCase(), 'NOAA Weather Alert')
+					if(spks.size() > 1 && spks[0].hasCommand('parallelPlayAnnouncement')) {
+						spks*.parallelPlayAnnouncement(alertmsg.toLowerCase(), 'NOAA Weather Alert')
 						tt = "parallel"
-						echospeaker[0].noOp()
-					} else echospeaker*.playAnnouncement(alertmsg.toLowerCase(), 'NOAA Weather Alert', null, null)
+						spks[0].noOp()
+					} else spks*.playAnnouncement(alertmsg.toLowerCase(), 'NOAA Weather Alert', null, null)
 					tt += " announce"
 				} else {
 					tt += " speak"
-					echospeaker*.speak(alertmsg)
+					spks*.speak(alertmsg)
 				}
 
 				okT = true
-				if((Boolean)logEnable) msgs.push("Sending ${tt} alert to EchoSpeaks device(s).".toString())
+				msgs.push("Sending ${tt} alert to EchoSpeaks device(s).".toString())
 				if(supportsSetVolume) {
-					if(speakervolRestore) {
-						echospeaker*.setVolume(speakervolRestore)
-						if((Boolean)logEnable) msgs.push("Restoring Speaker to volume level: ${speakervolRestore}".toString())
+					if(settings.speakervolRestore) {
+						spks*.setVolume(settings.speakervolRestore)
+						msgs.push("Restoring Speaker to volume level: ${settings.speakervolRestore}".toString())
 					} else {
 						Integer i = 0
-						((List)echospeaker).each { dev ->
+						spks.each { dev ->
 							def a = svVols[i]
 							try {
-								if((Boolean)logEnable) msgs.push("Restoring Speaker $dev to volume level: ${a}".toString())
+								msgs.push("Restoring Speaker $dev to volume level: ${a}".toString())
 								dev.setVolume(a)
-							} catch (ignored) { if ((Boolean)logEnable) msgs.push("Echo ${i} does not support restore volume command".toString()) }
+							} catch (ignored) { msgs.push("Echo ${i} does not support restore volume command".toString()) }
 							i+=1
 						}
 					}
@@ -887,92 +913,93 @@ void talkNow(String alertmsg, Boolean repeatCheck) {
 			}
 			catch (ignored) {}
 		}
-		if (msgs.size() > 0 && (Boolean)logEnable) msgs.each { String msg -> log.debug msg }
-		if(!okT) { log.warn "echospeaks device(s) ${echospeaker} has not been selected or does not support playAnnouncement command." }
+		if (msgs.size() > 0) msgs.each { String msg -> logDebug msg }
+		if(!okT) { logWarn "echospeaks device(s) ${spks} has not been selected or does not support playAnnouncement command." }
 	}
 
-	if((Boolean)speechmode) {
+	if((Boolean)settings.speechmode) {
+		List spks = (List)settings.speechspeaker
 		List<String> msgs = []
-		if((Boolean)logEnable) log.debug "Using speechSynthesis $speechspeaker, delays: ${speechdelay}"
+		logDebug "Using speechSynthesis $spks, delays: ${settings.speechdelay}"
 		Boolean okT = false
-		Boolean canSpeak = ((List)speechspeaker)[0].hasCommand('speak')
-		if(canSpeak && speechspeaker && ((List)speechspeaker)[0].hasCommand('initialize')) {
+		Boolean canSpeak = spks[0].hasCommand('speak')
+		if(canSpeak && spks && spks[0].hasCommand('initialize')) {
 			try {
-				speechspeaker*.initialize()
-				if((Boolean)logEnable) msgs.push("Initializing Speech Speaker")
+				spks*.initialize()
+				msgs.push("Initializing Speech Speaker")
 				okT = true
-				if((Boolean)speechdelay) pauseExecution(2500)
+				if((Boolean)settings.speechdelay) pauseExecution(2500)
 			}
-			catch (ignored) { log.warn "initialize command failed" }
-			if(!okT) { if((Boolean)logEnable) msgs.push("Speech device(s) ${speechspeaker} has not been selected or does not support initialize command.".toString()) }
+			catch (e) { logError "initialize command failed", e }
+			if(!okT) { msgs.push("Speech device(s) ${spks} has not been selected or does not support initialize command.".toString()) }
 		}
 
 		Boolean supportsSetVolume=false
 		List svVols = []
-		if(canSpeak && speakervolume && speechspeaker && ((List)speechspeaker)[0].hasCommand('setVolume')) {
-			if(!speakervolRestore) {
-				((List)speechspeaker).each { dev ->
+		if(canSpeak && settings.speakervolume && spks && spks[0].hasCommand('setVolume')) {
+			if(!settings.speakervolRestore) {
+				spks.each { dev ->
 					def a = dev?.currentState('volume')?.value
 					svVols.push(a)
 				}
 			}
 			try {
-				if((Boolean)logEnable) msgs.push("Setting Speech Speaker to volume level: ${speakervolume}".toString())
-				speechspeaker*.setVolume(speakervolume)
+				msgs.push("Setting Speech Speaker to volume level: ${settings.speakervolume}".toString())
+				spks*.setVolume(settings.speakervolume)
 				supportsSetVolume=true
-				if((Boolean)speechdelay) pauseExecution(2000)
+				if((Boolean)settings.speechdelay) pauseExecution(2000)
 			}
-			catch (ignored) { log.warn "unable to set volume" }
+			catch (e) { logError "unable to set volume", e }
 
-			if(!supportsSetVolume && speakervolume) { if((Boolean)logEnable) msgs.push("Speech device(s) ${speechspeaker} has not been selected or does not support setVolume command.".toString()) }
+			if(!supportsSetVolume && settings.speakervolume) { msgs.push("Speech device(s) ${spks} has not been selected or does not support setVolume command.".toString()) }
 		}
 
-		if(speechspeaker && canSpeak) {
+		if(spks && canSpeak) {
 			okT = false
 			alertmsg = alertmsg.toLowerCase()
 			try {
 				String tt = "serial"
-				if(speechspeaker && ((List)speechspeaker).size() > 1 && ((List)speechspeaker)[0].hasCommand('parallelSpeak') && alertmsg.size() < 420) {
-					speechspeaker*.parallelSpeak(alertmsg)
+				if(spks && spks.size() > 1 && spks[0].hasCommand('parallelSpeak') && alertmsg.size() < 420) {
+					spks*.parallelSpeak(alertmsg)
 					tt = "parallel"
-					speechspeaker[0].noOp()
-				} else speechspeaker*.speak(alertmsg)
+					spks[0].noOp()
+				} else spks*.speak(alertmsg)
 
 				okT = true
-				if((Boolean)logEnable) msgs.push("Sending ${tt} alert to Speech Speaker(s)".toString())
+				msgs.push("Sending ${tt} alert to Speech Speaker(s)".toString())
 
 				if(supportsSetVolume) {
 					Integer speechDuration = Math.max(Math.round(alertmsg.length()/14).toInteger(),2)+1
 					Long speechDuration2 = speechDuration * 1000L
-					if((Boolean)speechdelay) pauseExecution(speechDuration2)
-					if(speakervolRestore) {
-						speechspeaker*.setVolume(speakervolRestore)
-						if((Boolean)logEnable) msgs.push("Restoring Speech Speaker to volume level: ${speakervolRestore}".toString())
+					if((Boolean)settings.speechdelay) pauseExecution(speechDuration2)
+					if(settings.speakervolRestore) {
+						spks*.setVolume(settings.speakervolRestore)
+						msgs.push("Restoring Speech Speaker to volume level: ${settings.speakervolRestore}".toString())
 					} else {
 						Integer i = 0
-						((List)speechspeaker).each { dev ->
+						spks.each { dev ->
 							def a = svVols[i]
 							try {
 								dev.setVolume(a)
-								if((Boolean)logEnable) msgs.push("Restoring Speech Speaker $dev to volume level: ${a}".toString())
-							} catch (ignored) { if ((Boolean)logEnable) msgs.push("Speech speaker ${i} doesn't support restore volume command".toString()) }
+								msgs.push("Restoring Speech Speaker $dev to volume level: ${a}".toString())
+							} catch (ignored) { msgs.push("Speech speaker ${i} doesn't support restore volume command".toString()) }
 							i+=1
 						}
 					}
-					//if((Boolean)speechdelay) pauseExecution(1000)
+					//if((Boolean)settings.speechdelay) pauseExecution(1000)
 				}
 			} catch (ignored) {}
 		}
-		if (msgs.size() > 0 && (Boolean)logEnable) msgs.each { String msg -> log.debug msg }
-		if(!okT) { log.warn "Speech device(s) ${speechspeaker} has not been selected or does not support speak command." }
+		if (msgs.size() > 0) msgs.each { String msg -> logDebug msg }
+		if(!okT) { logWarn "Speech device(s) ${spks} has not been selected or does not support speak command." }
 	}
 }
 
 void pushNow(String alertmsg, Boolean repeatCheck) {
-	if ((Boolean)pushovertts) {
-		if((Boolean)logEnable) log.debug "Sending Pushover message."
+	if ((Boolean)settings.pushovertts) {
+		logInfo "Sending Pushover message."
 		if(repeatCheck) {
-			if(repeatTimes>1) alertmsg = "[Alert Repeat ${state.rptCount}/${state.rptNum}] " + alertmsg
+			if((Integer)settings.repeatTimes>1) alertmsg = "[Alert Repeat ${state.rptCount}/${state.rptNum}] " + alertmsg
 			else alertmsg = "[Alert Repeat] " + alertmsg
 		}
 
@@ -984,9 +1011,9 @@ void pushNow(String alertmsg, Boolean repeatCheck) {
 		Integer a=0
 		Integer i=0
 		while (i<lsiz){
-			String nextpart = ""
+			String nextpart = sBLANK
 			while (nextpart.size() < 1000 && i < lsiz) {
-				nextpart += subMsg[i] + ' '
+				nextpart += subMsg[i] + sSPACE
 				i+=1
 			}
 			fullalert[a] = nextpart
@@ -1010,8 +1037,8 @@ void pushNow(String alertmsg, Boolean repeatCheck) {
 		}*/
 
 		for(x=0;x<fullalert.size();x++) {
-			if(fullalert.size()>1) pushoverdevice.deviceNotification("(${x+1}/${fullalert.size()}) "+fullalert[x])
-			else pushoverdevice.deviceNotification(fullalert[x])
+			if(fullalert.size()>1) ((List)settings.pushoverdevice)*.deviceNotification("(${x+1}/${fullalert.size()}) "+fullalert[x])
+			else ((List)settings.pushoverdevice)*.deviceNotification(fullalert[x])
 			//pauseExecution(1000)
 		}
 	}
@@ -1024,7 +1051,7 @@ List getTile() {
 	List<Map> mListofAlertsFLD = ListofAlertsFLD[myId]
 	List msg = []
 	if(!(Boolean)settings.disableTile){
-		if((Boolean)logEnable) log.info "Creating data information for tile display."
+		logDebug "Creating data information for tile display."
 		try {
 			if((Boolean)state.testmsg) {
 				msg << [alertmsg:(String)state.repeatmsg]
@@ -1039,7 +1066,7 @@ List getTile() {
 			}
 		}
 		catch (ignored) {}
-	} else if(!msg && (Boolean)logEnable) log.debug "Tile display is disabled."
+	} else if(!msg) logDebug "Tile display is disabled."
 	return msg
 }
 
@@ -1059,7 +1086,7 @@ void buildEventsList(Boolean frc=false) {
 		Map results = getResponseEvents()
 		if(results) {
 			state.eventTypes = (List)results.eventTypes
-			if((Boolean)logEnable) log.debug "Acquired current events list from api.weather.gov"
+			logDebug "Acquired current events list from api.weather.gov"
 		}
 	}
 	if((List)state.eventTypes==null || (List)state.eventTypes==[]) {
@@ -1071,18 +1098,18 @@ void buildEventsList(Boolean frc=false) {
 void createChildDevices() {
 	try {
 		if (!getChildDevice("NOAA")) {
-			if ((Boolean)logEnable) log.info "Creating device: NOAA Tile"
+			logInfo "Creating device: NOAA Tile"
 			addChildDevice("aaronward", "NOAA Tile", "NOAA", 1234, ["name": "NOAA Tile", isComponent: false])
 		}
 	}
-	catch (e) { log.error "Couldn't create child device. ${e}" }
+	catch (e) { logError("Couldn't create child device.", e) }
 }
 
 void cleanupChildDevices() {
 	try {
 		for(device in getChildDevices()) deleteChildDevice(device.deviceNetworkId)
 	}
-	catch (ignored) { log.error "Couldn't clean up child devices." }
+	catch (e) { logError("Couldn't clean up child devices.", e) }
 }
 
 // Application Support Routines
@@ -1090,9 +1117,9 @@ Map getResponseURL(Boolean async=false) {
 	// Determine if custom coordinates have been selected
 	String latitude
 	String longitude
-	if(useCustomCords) {
-		latitude = "${customlatitude}".toString()
-		longitude = "${customlongitude}".toString()
+	if((Boolean)settings.useCustomCords) {
+		latitude = "${settings.customlatitude}".toString()
+		longitude = "${settings.customlongitude}".toString()
 	}else{
 		latitude = "${location.latitude}".toString()
 		longitude = "${location.longitude}".toString()
@@ -1102,18 +1129,28 @@ Map getResponseURL(Boolean async=false) {
 	Map result = null
 
 	// Build out the API options
-	if(whatAlertUrgency != null) wxURI = wxURI + "&urgency=${whatAlertUrgency.join(",")}".toString()
+	List<String> ulst = (List<String>)settings.whatAlertUrgency
+	if(ulst) wxURI = wxURI + "&urgency=${ulst.join(",")}".toString()
 
-	if(whatAlertSeverity != null) wxURI = wxURI + "&severity=${whatAlertSeverity.join(",")}".toString()
-	else wxURI = wxURI + "&severity=severe"
+	List<String> sevlst = (List<String>)settings.whatAlertSeverity
+	if(!sevlst) sevlst = ["severe"]
+/*	if((Boolean)settings.capitalizeAlertSeverity) {
+		List nlst
+		sevlst.each { String ss ->
+			nlst.push(ss.capitalize())
+		}
+		sevlst = nlst
+	} */
+	wxURI = wxURI + "&severity=${sevlst.join(",")}".toString()
 
-	if(whatAlertCertainty !=null) wxURI = wxURI + "&certainty=${whatAlertCertainty.join(",")}".toString()
+	List<String> alst = (List)settings.whatAlertCertainty
+	if(alst) wxURI = wxURI + "&certainty=${alst.join(",")}".toString()
 
 	state.wxURI = wxURI
-	if((Boolean)logEnable) log.debug "URI: <a href='${wxURI}' target=_blank>${wxURI}</a>"
+	logDebug "URI: <a href='${wxURI}' target=_blank>${wxURI}</a>"
 
 
-	if((Boolean)logEnable) log.debug "Connecting to weather.gov service."
+	logInfo "Connecting to weather.gov service."
 	Map requestParams =	[
 		uri: wxURI,
 		requestContentType: "application/json",
@@ -1126,29 +1163,30 @@ Map getResponseURL(Boolean async=false) {
 			httpGet(requestParams)	{ response ->
 				result = response.data
 				Integer responseCode=response.status
-				if(responseCode>=200 && responseCode<300 && resp.data){
-				} else { log.warn "The API Weather.gov did not return a response for ${wxURI}." }
+				if( !(responseCode>=200 && responseCode<300 && resp.data) ){
+					logWarn "The API Weather.gov did not return a valid response for ${wxURI} $responseCode."
+				}
 			}
 		}
-		catch (e) { if((Boolean)logEnable) log.warn "The API Weather.gov did not return a response for ${wxURI}. $e" }
+		catch (e) { logError "The API Weather.gov did not return a response for ${wxURI}.",e }
 		return result
 	} else {
 		try {
 			asynchttpGet('ahttpreq', requestParams, [command: 'a'])
 			return [async:true]
 		}
-		catch (e) { log.warn "Async http failed for ${wxURI}. $e" }
+		catch (e) { logError "Async http failed for ${wxURI}.", e }
 		return result
 	}
 }
 
-@SuppressWarnings('unused')
 void ahttpreq(resp, Map cbD){
 	Boolean ok=false
 	def data
+	Integer responseCode
 	try {
 		//def t0=resp.getHeaders()
-		Integer responseCode=resp.status
+		responseCode=resp.status
 		if(responseCode>=200 && responseCode<300 && resp.data){
 			data=resp.data
 			if(data!=null && !(data instanceof Map)){
@@ -1160,10 +1198,8 @@ void ahttpreq(resp, Map cbD){
 			}
             ok=true
 
-		} else log.warn "The API Weather.gov did not return a response."
-	} catch(e) {
-		log.warn "The API Weather.gov did not return a response. (exception), $e"
-	}
+		} else logWarn "The API Weather.gov did not return a response $responseCode."
+	} catch(e) { logError "The API Weather.gov did not return a response. (exception)", e }
 	if(ok) finishAlertMsg(data)
 	walertCheck()
 }
@@ -1182,37 +1218,43 @@ Map getResponseEvents() {
 		httpGet(requestParams) { response ->
 			result = response.data
 			Integer responseCode=response.status
-			if(responseCode>=200 && responseCode<300 && result){
-			} else { log.warn "The API Weather.gov get types did not return a response for ${wxURI}." }
+			if( !(responseCode>=200 && responseCode<300 && result) ){
+				logWarn "The API Weather.gov get types did not return a response for ${wxURI} ${responseCode}."
+			}
 		}
 	}
-	catch (e) {
-		log.warn "The API Weather.gov get types did not return a response for ${wxURI}. $e"
-	}
+	catch (e) { logError "The API Weather.gov get types did not return a response for ${wxURI}.", e }
 	return result
 }
 
 void checkState() {
 	atomicState.testmsg = false
-	if(whatPoll==null) app.updateSetting("whatPoll",[value:"5",type:"enum"])
-	if(logEnable==null) app.updateSetting("logEnable",[value:"false",type:"bool"])
-	if(logMinutes==null) app.updateSetting("logMinutes",[value:15,type:"number"])
-	if(whatAlertSeverity==null) app.updateSetting("whatAlertSeverity",[value:"severe",type:"enum"])
-	if(alertCustomMsg==null) app.updateSetting("whatCustomMsg",[value:"{alertseverity} Weather Alert for the following counties: {alertarea} {alertdescription} This is the end of this Weather Announcement.",type:"text"])
+	if(settings.whatPoll==null) app.updateSetting("whatPoll",[value:"5",type:sENUM])
+	if(settings.logInfo == null) app.updateSetting("logInfo", [value:sTRUE, type:sBOOL])
+	if(settings.logWarn == null) app.updateSetting("logWarn", [value:sTRUE, type:sBOOL])
+	if(settings.logError == null) app.updateSetting("logError", [value:sTRUE, type:sBOOL])
+	if(settings.logDebug==null) app.updateSetting("logDebug", [value:sFALSE, type:sBOOL])
+	if(settings.logTrace==null) app.updateSetting("logTrace", [value:sFALSE, type:sBOOL])
+//	if(settings.logEnable==null) app.updateSetting("logEnable",[value:sFALSE,type:sBOOL])
+	if(settings.logMinutes==null) app.updateSetting("logMinutes",[value:15,type:sNUMBER])
+	if(!(List)settings.whatAlertSeverity) app.updateSetting("whatAlertSeverity",[value:"severe",type:sENUM])
+	if((String)settings.alertCustomMsg==sNULL) app.updateSetting("whatCustomMsg",[value:"{alertseverity} Weather Alert for the following counties: {alertarea} {alertdescription} This is the end of this Weather Announcement.",type:"text"])
 
 	Integer t0
-	if(repeatTimes==null){
-		app.updateSetting("repeatTimes",[value:1,type:"number"])
+	if(settings.repeatTimes){
+		t0=(Integer)settings.repeatTimes
+	}else{
+		app.updateSetting("repeatTimes",[value:1,type:sNUMBER])
 		t0=1
-	}else t0=repeatTimes.toInteger()
+	}
 	state.rptNum = t0
 
-	if(repeatMinutes==null){
-		app.updateSetting("repeatMinutes",[value:15,type:"number"])
+	if(settings.repeatMinutes==null || settings.repeatMinutes < 0){
+		app.updateSetting("repeatMinutes",[value:15,type:sNUMBER])
 	}
 
 	state.rptCount = 0
-	if(!(Boolean)state.repeat) state.repeatmsg = (String)null
+	if(!(Boolean)state.repeat) state.repeatmsg = sNULL
 }
 
 void installCheck(){
@@ -1228,16 +1270,16 @@ void initialize() {
 	unschedule()
 	createChildDevices()
 	state.repeat = false
-	state.repeatmsg = (String)null
+	state.repeatmsg = sNULL
 	String myId=app.getId()
 	ListofAlertsFLD[myId] = []
 	ListofAlertsFLD = ListofAlertsFLD
 	state.ListofAlerts = []
-	if((Boolean)UsealertSwitch && alertSwitch && alertSwitch.currentState("switch").value == "on") alertNow(null, (String)null, false) // maybe Switch.off()
-	log.warn "NOAA Weather Alerts application state is reset."
+	if((Boolean)settings.UsealertSwitch && settings.alertSwitch && settings.alertSwitch.currentState("switch").value == "on") alertNow(null, sNULL, false) // maybe Switch.off()
+	logWarn "NOAA Weather Alerts application state is reset."
 
 	Integer myPoll=5
-	if(whatPoll!=null)myPoll=whatPoll.toInteger()
+	if(settings.whatPoll)myPoll=settings.whatPoll.toInteger()
 	switch(myPoll) {
 		case 1:
 			runEvery1Minute(main)
@@ -1266,25 +1308,24 @@ void initialize() {
 	main()
 
 	runIn(1,callRefreshTile)
-	if((Boolean)logEnable){
+	if((Boolean)settings.logDebug || (Boolean)settings.logTrace || (Boolean)settings.logInfo) {
+	//if((Boolean)settings.logEnable){
 		Integer myLog=15
-		if(logMinutes!=null)myLog=logMinutes.toInteger()
-		if(myLog!=0){
-			log.info "Debug messages set to automatically disable in ${myLog} minute(s)."
+		if(settings.logMinutes!=null)myLog=(Integer)settings.logMinutes
+		if(myLog>0){
+			logTrace "Debug messages set to automatically disable in ${myLog} minute(s)."
 			runIn((myLog*60),logsOff)
-		}else log.info "Debug logs set to not automatically disable."
-	}else log.info "Debug logs disabled."
+		}else logTrace "Debug logs set to not automatically disable."
+	}else logTrace "Debug logs disabled."
 }
 
-@SuppressWarnings('unused')
 void installed() {
-	if((Boolean)logEnable) log.debug "Installed with settings: ${settings}"
+	logDebug "Installed with settings: ${settings}"
 	initialize()
 }
 
-@SuppressWarnings('unused')
 void updated() {
-	if((Boolean)logEnable) log.debug "Updated with settings: ${settings}"
+	logDebug "Updated with settings: ${settings}"
 	state.remove('num')
 	state.remove('speechDuration2')
 	state.remove('frequency')
@@ -1292,13 +1333,12 @@ void updated() {
 	initialize()
 }
 
-@SuppressWarnings('unused')
 void uninstalled() {
 	cleanupChildDevices()
 }
 
 
-static String UIsupport(String type, String txt) {
+static String UIsupport(String type, String txt=sBLANK) {
 	switch(type) {
 		case "logo":
 			return "<table border=0><thead><tr><th><img border=0 style='max-width:100px' src='https://raw.githubusercontent.com/imnotbob/Hubitat-4/master/NOAA/Support/NOAA.png'></th><th style='padding:10px' align=left><font style='font-size:34px;color:#1A77C9;font-weight: bold'>NOAA Weather Alerts</font><br><font style='font-size:14px;font-weight: none'>This application provides customized Weather Alert announcements.</font></tr></thead></table><br><hr style='margin-top:-15px;background-color:#1A77C9; height: 1px; border: 0;'></hr>"
@@ -1310,7 +1350,7 @@ static String UIsupport(String type, String txt) {
 			return "<div style='color:#ffffff;font-weight: bold;background-color:#1A7BC7;border: 1px solid;box-shadow: 2px 3px #A9A9A9'>${txt}</div>"
 			break
 		case "footer":
-			return "<div style='color:#1A77C9;text-align:center'>App/Driver v${version()}<br>Originally Developed by: Aaron Ward<br></div>"
+			return "<div style='color:#1A77C9;text-align:center'>App/Driver v${appVersionFLD}<br>Originally Developed by: Aaron Ward<br></div>"
 			break
 		case "configured":
 			return "<img border=0 style='max-width:15px' src='https://raw.githubusercontent.com/imnotbob/Hubitat-4/master/support/images/Checked.svg'>"
@@ -1319,11 +1359,43 @@ static String UIsupport(String type, String txt) {
 			return "<img border=0 style='max-width:15px' src='https://raw.githubusercontent.com/imnotbob/Hubitat-4/master/support/images/Attention.svg'>"
 			break
 	}
-	return (String)null
+	return sNULL
 }
 
-@SuppressWarnings('unused')
 void logsOff(){
-	log.info "Debug logging disabled."
-	app.updateSetting("logEnable",[value:"false",type:"bool"])
+	logInfo "Debug logging disabled."
+//	app.updateSetting("logEnable",[value:sFALSE,type:sBOOL])
+	app.removeSetting("logEnable")
+	app.updateSetting("logDebug", [value:sFALSE, type:sBOOL])
+	app.updateSetting("logTrace", [value:sFALSE, type:sBOOL])
+	app.updateSetting("logInfo", [value:sFALSE, type:sBOOL])
 }
+
+private void logDebug(String msg) { if((Boolean)settings.logDebug) { log.debug logPrefix(msg, "purple") } }
+private void logInfo(String msg) { if((Boolean)settings.logInfo) { log.info sSPACE + logPrefix(msg, "#0299b1") } }
+private void logTrace(String msg) { if((Boolean)settings.logTrace) { log.trace logPrefix(msg, sCLRGRY) } }
+private void logWarn(String msg) { if((Boolean)settings.logWarn) { log.warn sSPACE + logPrefix(msg, sCLRORG) } }
+
+void logError(String msg, ex=null) {
+	if((Boolean)settings.logError) {
+		log.error logPrefix(msg, sCLRRED)
+		String a
+		try {
+			if (ex) a = getExceptionMessageWithLine(ex)
+		} catch (ignored) {
+		}
+		if(a) log.error logPrefix(a, sCLRRED)
+	}
+}
+
+static String logPrefix(String msg, String color = sNULL) {
+	return span("NOAAApp (v" + appVersionFLD + ") | ", sCLRGRY) + span(msg, color)
+}
+
+static String span(String str, String clr=sNULL, String sz=sNULL, Boolean bld=false, Boolean br=false) { return str ? "<span ${(clr || sz || bld) ? "style='${clr ? "color: ${clr};" : sBLANK}${sz ? "font-size: ${sz};" : sBLANK}${bld ? "font-weight: bold;" : sBLANK}'" : sBLANK}>${str}</span>${br ? sLINEBR : sBLANK}" : sBLANK }
+static String inTS1(String str, String img = sNULL, String clr=sNULL, Boolean und=true) { return spanSmBldUnd(str, clr, img) }
+static String spanSmBldUnd(String str, String clr=sNULL, String img=sNULL) { return str ? spanImgStr(img) + span(strUnder(str), clr, sSMALL, true) : sBLANK }
+static String spanImgStr(String img=sNULL) { return img ? span("<img src='${(!img.startsWith("http://") && !img.startsWith("https://")) ? getAppImg(img) : img}' width='42'> ") : sBLANK }
+static String strUnder(String str, Boolean showUnd=true) { return str ? (showUnd ? "<u>${str}</u>" : str) : sBLANK }
+
+static String getAppImg(String imgName) { return "https://raw.githubusercontent.com/tonesto7/echo-speaks/master/resources/icons/${imgName}.png" }
