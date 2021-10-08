@@ -168,7 +168,7 @@ def ConfigPage() {
 					"moderate": "Moderate",
 					"severe": "Severe",
 					"extreme": "Extreme"], required: true, multiple: true, defaultValue: "severe"
-//			input name:"capitalizeAlertSeverity", type: sBOOL, title: "Capitalize Severity in API calls (NOAA bug)?", require: false, defaultValue: false, submitOnChange: true
+			input name:"capitalizeAlertSeverity", type: sBOOL, title: "Capitalize Severity in API calls (NOAA bug)?", require: false, defaultValue: false, submitOnChange: true
 			input name: "whatPoll", type: sENUM, title: "Poll Frequency: ", options: ["1": "1 Minute", "5": "5 Minutes", "10": "10 Minutes", "15": "15 Minutes", "60": "60 Minutes"], required: true, multiple: false, defaultValue: "5"
 			input "repeatYes", sBOOL, title: "Repeat Alert?", require: false, defaultValue: false, submitOnChange: true
 			if((Boolean)settings.repeatYes) {
@@ -1134,13 +1134,13 @@ Map getResponseURL(Boolean async=false) {
 
 	List<String> sevlst = (List<String>)settings.whatAlertSeverity
 	if(!sevlst) sevlst = ["severe"]
-/*	if((Boolean)settings.capitalizeAlertSeverity) {
-		List nlst
+	if((Boolean)settings.capitalizeAlertSeverity) {
+		List nlst=[]
 		sevlst.each { String ss ->
 			nlst.push(ss.capitalize())
 		}
 		sevlst = nlst
-	} */
+	}
 	wxURI = wxURI + "&severity=${sevlst.join(",")}".toString()
 
 	List<String> alst = (List)settings.whatAlertCertainty
