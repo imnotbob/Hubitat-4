@@ -1129,21 +1129,15 @@ Map getResponseURL(Boolean async=false) {
 	Map result = null
 
 	// Build out the API options
-	List<String> ulst = (List<String>)settings.whatAlertUrgency
+	List<String> ulst = checkCap((List<String>)settings.whatAlertUrgency)
 	if(ulst) wxURI = wxURI + "&urgency=${ulst.join(",")}".toString()
 
 	List<String> sevlst = (List<String>)settings.whatAlertSeverity
 	if(!sevlst) sevlst = ["severe"]
-	if((Boolean)settings.capitalizeAlertSeverity) {
-		List nlst=[]
-		sevlst.each { String ss ->
-			nlst.push(ss.capitalize())
-		}
-		sevlst = nlst
-	}
+	sevlst = checkCap(sevlst)
 	wxURI = wxURI + "&severity=${sevlst.join(",")}".toString()
 
-	List<String> alst = (List)settings.whatAlertCertainty
+	List<String> alst = checkCap((List<String>)settings.whatAlertCertainty)
 	if(alst) wxURI = wxURI + "&certainty=${alst.join(",")}".toString()
 
 	state.wxURI = wxURI
@@ -1163,7 +1157,7 @@ Map getResponseURL(Boolean async=false) {
 			httpGet(requestParams)	{ response ->
 				result = response.data
 				Integer responseCode=response.status
-				if( !(responseCode>=200 && responseCode<300 && resp.data) ){
+				if( !(responseCode>=200 && responseCode<300 && result) ){
 					logWarn "The API Weather.gov did not return a valid response for ${wxURI} $responseCode."
 				}
 			}
@@ -1180,25 +1174,38 @@ Map getResponseURL(Boolean async=false) {
 	}
 }
 
+List checkCap(List<String> sevlst){
+	if(sevlst && (Boolean)settings.capitalizeAlertSeverity) {
+		List<String> nlst=[]
+		sevlst.each { String ss ->
+			nlst.push(ss.capitalize())
+		}
+		return nlst
+	}
+	return sevlst
+}
+
 void ahttpreq(resp, Map cbD){
 	Boolean ok=false
-	def data
+	Map data=null
 	Integer responseCode
 	try {
 		//def t0=resp.getHeaders()
 		responseCode=resp.status
-		if(responseCode>=200 && responseCode<300 && resp.data){
-			data=resp.data
-			if(data!=null && !(data instanceof Map)){
+		if(responseCode>=200 && responseCode<300){
+			String rdata=resp.data
+			if(rdata){
+				//logInfo "http result: data is not a map."
 				try{
-					data=(LinkedHashMap) new JsonSlurper().parseText((String)data)
+					data= new JsonSlurper().parseText(rdata)
 				}catch (ignored){
+					logInfo "http result: parsing json failed."
 					data=resp.data
 				}
+				ok=true
 			}
-            ok=true
 
-		} else logWarn "The API Weather.gov did not return a response $responseCode."
+		} else logWarn "The API Weather.gov did not return a successful response $responseCode message ${resp.getErrorMessage()}."
 	} catch(e) { logError "The API Weather.gov did not return a response. (exception)", e }
 	if(ok) finishAlertMsg(data)
 	walertCheck()
@@ -1264,6 +1271,7 @@ void installCheck(){
 	}
 }
 
+@SuppressWarnings('GroovyFallthrough')
 void initialize() {
 	buildEventsListFrc()
 	checkState()
