@@ -15,7 +15,7 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 10/02/2021
+ * Last Update: 01/03/2022
  */
 //file:noinspection GroovySillyAssignment
 //file:noinspection unused
@@ -31,7 +31,7 @@ import java.text.SimpleDateFormat
 //import groovy.time.*
 
 
-@Field static final String appVersionFLD  = '4.0.017'
+@Field static final String appVersionFLD  = '4.0.018'
 @Field static final String sNULL          = (String)null
 @Field static final String sBLANK         = ''
 @Field static final String sSPACE         = ' '
@@ -693,94 +693,111 @@ Map buildAlertMap(Map result) {
 	return [alertid:result.properties.id, alertseverity:result.properties.severity, alertarea:alertarea, alertsent:result.properties.sent, alerteffective:result.properties.effective, alertonset:result.properties.onset, alertexpires:alertexpires, alertstatus:result.properties.status, alertmessagetype:result.properties.messageType, alertcategory:result.properties.category, alertcertainty:result.properties.certainty, alerturgency:result.properties.urgency, alertsendername:result.properties.senderName, alertheadline:alertheadline, alertdescription:alertdescription, alertinstruction:alertinstruction, alertevent:result.properties.event, alertmsg:alertmsg]
 }
 
-static String alertFormatStates(String msg) {
-	msg = msg.replaceAll("/AL/","Alabama")
-	msg = msg.replaceAll("/AK/","Alaska")
-	msg = msg.replaceAll("/AZ/","Arizona")
-	msg = msg.replaceAll("/AR/","Arkansas")
-	msg = msg.replaceAll("/CA/","California")
-	msg = msg.replaceAll("/CO/","Colorado")
-	msg = msg.replaceAll("/CT/","Connecticut")
-	msg = msg.replaceAll("/DE/","Deleware")
-	msg = msg.replaceAll("/FL/","Florida")
-	msg = msg.replaceAll("/GA/","Georgia")
-	msg = msg.replaceAll("/HI/","Hawaii")
-	msg = msg.replaceAll("/ID/","Idaho")
-	msg = msg.replaceAll("/IL/","Illinois")
-	msg = msg.replaceAll("/IN/","Indiana")
-	msg = msg.replaceAll("/IA/","Iowa")
-	msg = msg.replaceAll("/KS/","Kansas")
-	msg = msg.replaceAll("/KY/","Kentucky")
-	msg = msg.replaceAll("/LA/","Louisiana")
-	msg = msg.replaceAll("/ME/","Maine")
-	msg = msg.replaceAll("/MA/","Massachusetts")
-	msg = msg.replaceAll("/MD/","Maryland")
-	msg = msg.replaceAll("/MI/","Michigan")
-	msg = msg.replaceAll("/MN/","Minnesota")
-	msg = msg.replaceAll("/MS/","Mississippi")
-	msg = msg.replaceAll("/MO/","Missouri")
-	msg = msg.replaceAll("/MT/","Montana")
-	msg = msg.replaceAll("/NE/","Nebraska")
-	msg = msg.replaceAll("/NV/","Nevada")
-	msg = msg.replaceAll("/NH/","New Hampshire")
-	msg = msg.replaceAll("/NJ/","New Jersey")
-	msg = msg.replaceAll("/NM/","New Mexico")
-	msg = msg.replaceAll("/NY/","New York")
-	msg = msg.replaceAll("/NC/","North Carolina")
-	msg = msg.replaceAll("/ND/","North Dakota")
-	msg = msg.replaceAll("/OH/","Ohio")
-	msg = msg.replaceAll("/OK/","Oklahoma")
-	msg = msg.replaceAll("/OR/","Oregon")
-	msg = msg.replaceAll("/PA/","Pennsylvania")
-	msg = msg.replaceAll("/RI/","Rhode Island")
-	msg = msg.replaceAll("/SC/","South Carolina")
-	msg = msg.replaceAll("/SD/","South Dakota")
-	msg = msg.replaceAll("/TN/","Tennessee")
-	msg = msg.replaceAll("/TX/","Texas")
-	msg = msg.replaceAll("/UT/","Utah")
-	msg = msg.replaceAll("/VT/","Vermont")
-	msg = msg.replaceAll("/VA/","Virginia")
-	msg = msg.replaceAll("/WA/","Washington")
-	msg = msg.replaceAll("/WV/","West Virginia")
-	msg = msg.replaceAll("/WI/","Wisconsin")
-	msg = msg.replaceAll("/WY/","Wyoming")
+static String alertFormatStates(String imsg) {
+	String msg=imsg
+	if(msg) {
+		msg = msg.replaceAll("/AL/", "Alabama")
+		msg = msg.replaceAll("/AK/", "Alaska")
+		msg = msg.replaceAll("/AZ/", "Arizona")
+		msg = msg.replaceAll("/AR/", "Arkansas")
+		msg = msg.replaceAll("/CA/", "California")
+		msg = msg.replaceAll("/CO/", "Colorado")
+		msg = msg.replaceAll("/CT/", "Connecticut")
+		msg = msg.replaceAll("/DE/", "Deleware")
+		msg = msg.replaceAll("/FL/", "Florida")
+		msg = msg.replaceAll("/GA/", "Georgia")
+		msg = msg.replaceAll("/HI/", "Hawaii")
+		msg = msg.replaceAll("/ID/", "Idaho")
+		msg = msg.replaceAll("/IL/", "Illinois")
+		msg = msg.replaceAll("/IN/", "Indiana")
+		msg = msg.replaceAll("/IA/", "Iowa")
+		msg = msg.replaceAll("/KS/", "Kansas")
+		msg = msg.replaceAll("/KY/", "Kentucky")
+		msg = msg.replaceAll("/LA/", "Louisiana")
+		msg = msg.replaceAll("/ME/", "Maine")
+		msg = msg.replaceAll("/MA/", "Massachusetts")
+		msg = msg.replaceAll("/MD/", "Maryland")
+		msg = msg.replaceAll("/MI/", "Michigan")
+		msg = msg.replaceAll("/MN/", "Minnesota")
+		msg = msg.replaceAll("/MS/", "Mississippi")
+		msg = msg.replaceAll("/MO/", "Missouri")
+		msg = msg.replaceAll("/MT/", "Montana")
+		msg = msg.replaceAll("/NE/", "Nebraska")
+		msg = msg.replaceAll("/NV/", "Nevada")
+		msg = msg.replaceAll("/NH/", "New Hampshire")
+		msg = msg.replaceAll("/NJ/", "New Jersey")
+		msg = msg.replaceAll("/NM/", "New Mexico")
+		msg = msg.replaceAll("/NY/", "New York")
+		msg = msg.replaceAll("/NC/", "North Carolina")
+		msg = msg.replaceAll("/ND/", "North Dakota")
+		msg = msg.replaceAll("/OH/", "Ohio")
+		msg = msg.replaceAll("/OK/", "Oklahoma")
+		msg = msg.replaceAll("/OR/", "Oregon")
+		msg = msg.replaceAll("/PA/", "Pennsylvania")
+		msg = msg.replaceAll("/RI/", "Rhode Island")
+		msg = msg.replaceAll("/SC/", "South Carolina")
+		msg = msg.replaceAll("/SD/", "South Dakota")
+		msg = msg.replaceAll("/TN/", "Tennessee")
+		msg = msg.replaceAll("/TX/", "Texas")
+		msg = msg.replaceAll("/UT/", "Utah")
+		msg = msg.replaceAll("/VT/", "Vermont")
+		msg = msg.replaceAll("/VA/", "Virginia")
+		msg = msg.replaceAll("/WA/", "Washington")
+		msg = msg.replaceAll("/WV/", "West Virginia")
+		msg = msg.replaceAll("/WI/", "Wisconsin")
+		msg = msg.replaceAll("/WY/", "Wyoming")
+	}
 	return msg
 }
 
-static String alertRemoveTimeZone(String msg) {
+static String alertRemoveTimeZone(String imsg) {
 	// Remove Timezones
-	return msg.replaceAll(/(AST|EST|EDT|CST|CDT|MST|MDT|PST|PDT|AKST|AKDT|HST|HAST|HADT)/,sBLANK)
+	String msg=imsg
+	if(msg){
+		return msg?.replaceAll(/(AST|EST|EDT|CST|CDT|MST|MDT|PST|PDT|AKST|AKDT|HST|HAST|HADT)/,sBLANK)
+	}
+	return sBLANK
 }
 
-static String alertRemoveStates(String msg) {
-	return msg.replaceAll(/(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IA|IN|KS|KY|LA|ME|MA|MD|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)/, sBLANK)
+static String alertRemoveStates(String imsg) {
+	String msg=imsg
+	if(msg) {
+		return msg?.replaceAll(/(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IA|IN|KS|KY|LA|ME|MA|MD|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)/, sBLANK)
+	}
+	return sBLANK
 }
 
-static String alertFormatText(String msg) {
-	msg = msg.replaceAll(/NWS/,"the National Weather Service of")
-	msg = msg.replaceAll(/(WHAT|WHEN|IMPACTS|IMPACT|WHERE|INCLUDES|HAZARDS|INCLUDE|HAZARD|TEMPERATURE|SOURCE)/, sBLANK)
-	msg = msg.replaceAll(/\.{2,}/, sBLANK)
-	msg = msg.replaceAll(/\*/, sBLANK)
-	msg = msg.replaceAll(/MPH/, "miles per hour")
-	msg = msg.replaceAll("","")
-	msg = msg.replaceAll("\n",sSPACE)
-	msg = msg.replaceAll("\\s+", sSPACE)
-	msg = msg.replaceAll(/(?:(\d{2})(\d{2}))|(?:(\d(?!\d{3}))(\d{2}))(?=\s?(?i:am|pm))/,'$1$3:$2$4')
+static String alertFormatText(String imsg) {
+	String msg=imsg
+	if(msg) {
+		msg = msg.replaceAll(/NWS/, "the National Weather Service of")
+		msg = msg.replaceAll(/(WHAT|WHEN|IMPACTS|IMPACT|WHERE|INCLUDES|HAZARDS|INCLUDE|HAZARD|TEMPERATURE|SOURCE)/, sBLANK)
+		msg = msg.replaceAll(/\.{2,}/, sBLANK)
+		msg = msg.replaceAll(/\*/, sBLANK)
+		msg = msg.replaceAll(/MPH/, "miles per hour")
+		msg = msg.replaceAll("", "")
+		msg = msg.replaceAll("\n", sSPACE)
+		msg = msg.replaceAll("\\s+", sSPACE)
+		msg = msg.replaceAll(/(?:(\d{2})(\d{2}))|(?:(\d(?!\d{3}))(\d{2}))(?=\s?(?i:am|pm))/, '$1$3:$2$4')
+	}
 	return msg
 }
 
-static String alertFormatArea(String msg) {
-	msg.replaceAll(/NWS/,"the National Weather Service of")
-	msg = msg.replaceAll(", ",sBLANK)
-	msg = msg.replaceAll(",",sBLANK)
-	msg = msg.replaceAll(";",",")
-	msg = msg.replaceAll("\n"," ")
-	msg = msg.replaceAll("\\s+", sSPACE)
-	msg = msg.replaceAll("/",sBLANK)
-	StringBuffer buffer = new StringBuffer(msg)
-	msg = buffer.reverse().toString().replaceFirst(",","dna ")
-	msg = new StringBuffer(msg).reverse().toString()
-	msg = msg + "."
+static String alertFormatArea(String imsg) {
+	String msg=imsg
+	if(msg) {
+		msg.replaceAll(/NWS/, "the National Weather Service of")
+		msg = msg.replaceAll(", ", sBLANK)
+		msg = msg.replaceAll(",", sBLANK)
+		msg = msg.replaceAll(";", ",")
+		msg = msg.replaceAll("\n", " ")
+		msg = msg.replaceAll("\\s+", sSPACE)
+		msg = msg.replaceAll("/", sBLANK)
+		StringBuffer buffer = new StringBuffer(msg)
+		msg = buffer.reverse().toString().replaceFirst(",", "dna ")
+		msg = new StringBuffer(msg).reverse().toString()
+		msg = msg + "."
+	}
 	return msg
 }
 
