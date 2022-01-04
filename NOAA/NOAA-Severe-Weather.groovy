@@ -523,7 +523,7 @@ void finishAlertMsg(Map result){
 		String timestamp = date.format("yyyy-MM-dd'T'HH:mm:ssXXX")
 		Date dt1 = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", timestamp)
 
-		for(i=0; i<result.features.size();i++) {
+		for(Integer i=0; i<result.features.size();i++) {
 			Map msgMap=null
 //			debug=true
 //			alertmsg=[]
@@ -592,7 +592,7 @@ void finishAlertMsg(Map result){
 		if(mListofAlertsFLD) {
 			Boolean fixedRepeat=false
 			Boolean schedTile=false
-			for(y=0;y<mListofAlertsFLD.size();y++) {
+			for(Integer y=0;y<mListofAlertsFLD.size();y++) {
 				Map msgMap = (Map)mListofAlertsFLD[y]
 				if(msgMap && !(Boolean)msgMap.expired) {
 					if(!(Boolean)msgMap.alertAnnounced || !(Boolean)msgMap.alertPushed) {
@@ -1012,7 +1012,8 @@ void talkNow(String alertmsg, Boolean repeatCheck) {
 	}
 }
 
-void pushNow(String alertmsg, Boolean repeatCheck) {
+void pushNow(String ialertmsg, Boolean repeatCheck) {
+	String alertmsg=ialertmsg
 	if ((Boolean)settings.pushovertts) {
 		logInfo "Sending Pushover message."
 		if(repeatCheck) {
@@ -1053,7 +1054,7 @@ void pushNow(String alertmsg, Boolean repeatCheck) {
 			fullalert << m.group()
 		}*/
 
-		for(x=0;x<fullalert.size();x++) {
+		for(Integer x=0;x<fullalert.size();x++) {
 			if(fullalert.size()>1) ((List)settings.pushoverdevice)*.deviceNotification("(${x+1}/${fullalert.size()}) "+fullalert[x])
 			else ((List)settings.pushoverdevice)*.deviceNotification(fullalert[x])
 			//pauseExecution(1000)
