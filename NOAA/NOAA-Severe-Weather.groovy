@@ -15,7 +15,7 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 01/04/2022
+ * Last Update: 04/04/2022
  */
 //file:noinspection GroovySillyAssignment
 //file:noinspection unused
@@ -31,7 +31,7 @@ import java.text.SimpleDateFormat
 //import groovy.time.*
 
 
-@Field static final String appVersionFLD ='4.0.018'
+@Field static final String appVersionFLD ='4.0.019'
 @Field static final String sNULL         =(String)null
 @Field static final String sBLANK        =''
 @Field static final String sSPACE        =' '
@@ -169,11 +169,11 @@ def ConfigPage(){
 			paragraph "Configure NOAA to look for specific alert severities, how often to poll for weather information, repeat alerts, use custom coordinates and customize the alert message sent to notification device(s)."
 			input ((sNM): "whatAlertSeverity", (sTY): sENUM, title: "Weather Severity(s) to gather in poll: ",
 				options: [
-					"unknown": "Unknown",
-					"minor": "Minor",
-					"moderate": "Moderate",
-					"severe": "Severe",
-					"extreme": "Extreme"], required: true, multiple: true, defaultValue: "severe")
+					"Unknown": "Unknown",
+					"Minor": "Minor",
+					"Moderate": "Moderate",
+					"Severe": "Severe",
+					"Extreme": "Extreme"], required: true, multiple: true, defaultValue: "Severe")
 			input ((sNM):"capitalizeAlertSeverity", (sTY): sBOOL, title: "Capitalize Severity in API calls (NOAA bug)?", require: false, defaultValue: false, submitOnChange: true)
 			input ((sNM): "whatPoll", (sTY): sENUM, title: "Poll Frequency: ", options: ["1": "1 Minute", "5": "5 Minutes", "10": "10 Minutes", "15": "15 Minutes", "60": "60 Minutes"], required: true, multiple: false, defaultValue: "5")
 			input ((sNM): "repeatYes", (sTY): sBOOL, title: "Repeat Alert?", require: false, defaultValue: false, submitOnChange: true)
