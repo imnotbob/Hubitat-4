@@ -15,7 +15,7 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 01/04/2022
+ * Last Update: 06/19/2022
  */
 //file:noinspection GroovySillyAssignment
 //file:noinspection unused
@@ -31,7 +31,7 @@ import java.text.SimpleDateFormat
 //import groovy.time.*
 
 
-@Field static final String appVersionFLD ='4.0.018'
+@Field static final String appVersionFLD ='4.0.019'
 @Field static final String sNULL         =(String)null
 @Field static final String sBLANK        =''
 @Field static final String sSPACE        =' '
@@ -716,7 +716,7 @@ static String alertFormatStates(String imsg){
 		msg=msg.replaceAll("/CA/", "California")
 		msg=msg.replaceAll("/CO/", "Colorado")
 		msg=msg.replaceAll("/CT/", "Connecticut")
-		msg=msg.replaceAll("/DE/", "Deleware")
+		msg=msg.replaceAll("/DE/", "Delaware")
 		msg=msg.replaceAll("/FL/", "Florida")
 		msg=msg.replaceAll("/GA/", "Georgia")
 		msg=msg.replaceAll("/HI/", "Hawaii")
@@ -854,17 +854,17 @@ String buildTestAlert(){
 	try{ alertmsg=alertmsg.replace("{alertheadline}","The founder, Jebediah Springfield has spotted a cloud above the nuclear power plant towers.")}
 	//try{ alertmsg=alertmsg.replace("{alertheadline}","The founder, has spotted a cloud.")}
 	catch (ignored){}
-	try{ alertmsg=alertmsg.replace("{alertdescription}","The founder, Jebediah Springfield has spotted a cloud above the nuclear power plant towers.  Expect heavy polution, possible fish with three eyes, and a Simpson asleep at the console.  Also a notorius yellow haired boy is terrorizing animals with spit wads.  Be on the look out for suspicious activity.")}
+	try{ alertmsg=alertmsg.replace("{alertdescription}","The founder, Jebediah Springfield has spotted a cloud above the nuclear power plant towers.  Expect heavy pollution, possible fish with three eyes, and a Simpson asleep at the console.  Also a notorious yellow haired boy is terrorizing animals with spit wads.  Be on the look out for suspicious activity.")}
 	//try{ alertmsg=alertmsg.replace("{alertdescription}","The description.")}
 	catch (ignored){}
-	try{ alertmsg=alertmsg.replace("{alertinstruction}","Expect heavy polution, possible fish with three eyes, and a Simpson asleep at the console.")}
+	try{ alertmsg=alertmsg.replace("{alertinstruction}","Expect heavy pollution, possible fish with three eyes, and a Simpson asleep at the console.")}
 	catch (ignored){}
 	try{ alertmsg=alertmsg.replace("{alertevent}","Nuclear Power Plant Warning")}
 	catch (ignored){}
 	return alertmsg
 }
 
-// Common Notifcation Routines
+// Common Notification Routines
 void talkNow(String alertmsg, Boolean repeatCheck){
 	if(repeatCheck){
 		if((Boolean)settings.useAlertIntro) alertmsg="Repeating previous alert,, ${settings.AlertIntro} "+alertmsg
@@ -1164,7 +1164,8 @@ Map getResponseURL(Boolean async=false){
 	List<String> ulst=checkCap((List<String>)settings.whatAlertUrgency)
 	if(ulst) wxURI=wxURI+"&urgency=${ulst.join(",")}".toString()
 
-	List<String> sevlst=(List<String>)settings.whatAlertSeverity
+	List<String> sevlst
+	sevlst= settings.whatAlertSeverity instanceof String ? [ settings.whatAlertSeverity ] : (List<String>)settings.whatAlertSeverity
 	if(!sevlst) sevlst=["severe"]
 	sevlst=checkCap(sevlst)
 	wxURI=wxURI+"&severity=${sevlst.join(",")}".toString()
@@ -1276,7 +1277,7 @@ void checkState(){
 	if(settings.logTrace==null) app.updateSetting("logTrace", [(sVL):sFALSE, (sTY):sBOOL])
 //	if(settings.logEnable==null) app.updateSetting("logEnable",[(sVL):sFALSE,(sTY):sBOOL])
 	if(settings.logMinutes==null) app.updateSetting("logMinutes",[(sVL):15,(sTY):sNUMBER])
-	if(!(List)settings.whatAlertSeverity) app.updateSetting("whatAlertSeverity",[(sVL):"severe",(sTY):sENUM])
+	if(!(List)settings.whatAlertSeverity) app.updateSetting("whatAlertSeverity",[(sVL):["severe"],(sTY):sENUM])
 	if((String)settings.alertCustomMsg==sNULL) app.updateSetting("whatCustomMsg",[(sVL):"{alertseverity} Weather Alert for the following counties:{alertarea}{alertdescription} This is the end of this Weather Announcement.",(sTY):"text"])
 
 	Integer t0
