@@ -120,7 +120,7 @@ void continuePlay(List<Integer> dd){
 		if(didIt) { runIn(12, continuePlay, [data: [x, 0]]); return }
 
 		String t= (String)noaaData[x].alertmsg
-		String m = t =~ /(.|[\r\n]){1,378}\W/
+		def m = t =~ /(.|[\r\n]){1,378}\W/
 		fullmsg = []
 		while (m.find()) {
 			fullmsg << m.group()
