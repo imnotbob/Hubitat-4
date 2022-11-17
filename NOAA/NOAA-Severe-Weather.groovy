@@ -15,11 +15,13 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 06/19/2022
+ * Last Update: 11/17/2022
  */
 //file:noinspection GroovySillyAssignment
 //file:noinspection unused
-
+//file:noinspection SpellCheckingInspection
+//file:noinspection GrDeprecatedAPIUsage
+//file:noinspection GroovyUnusedAssignment
 
 import groovy.json.JsonSlurper
 import groovy.transform.Field
@@ -31,7 +33,7 @@ import java.text.SimpleDateFormat
 //import groovy.time.*
 
 
-@Field static final String appVersionFLD ='4.0.019'
+@Field static final String appVersionFLD ='4.0.020'
 @Field static final String sNULL         =(String)null
 @Field static final String sBLANK        =''
 @Field static final String sSPACE        =' '
@@ -309,14 +311,16 @@ def SettingsPage(){
 				if(mListofAlertsFLD){
 					Boolean restrictionSwitch=((Boolean)settings.switchYes && settings.restrictbySwitch != null && settings.restrictbySwitch.currentState(sSW).value==sON)
 					Boolean restrictionMode=((Boolean)settings.modesYes && settings.modes != null && settings.modes.contains(location.mode))
-					Boolean overrideRestSeverity=((Boolean)settings.modeSeverityYes && settings.modeSeverity != null)
-					Boolean overrideRestWeather=((Boolean)settings.modeWeatherType && settings.WeatherType != null)
+					Boolean overrideRestSeverity
+					overrideRestSeverity=((Boolean)settings.modeSeverityYes && settings.modeSeverity != null)
+					Boolean overrideRestWeather
+					overrideRestWeather=((Boolean)settings.modeWeatherType && settings.WeatherType != null)
 					//Boolean alertSwitchReset=((Boolean)settings.alertSwitchWeatherType && (List)settings.alertSwitchWeatherTypeWatch && ((List)settings.alertSwitchWeatherTypeWatch).contains(mListofAlertsFLD[0].alertevent))
 					//def testresult=(!(result || result2) || result3 || result4) ? true : false
 					Date date=new Date()
 					SimpleDateFormat sdf=new SimpleDateFormat("MM/dd/yyyy h:mm a")
-					String testConfig=sBLANK
-					String customMsg=(String)settings.alertCustomMsg
+					String testConfig; testConfig=sBLANK
+					String customMsg; customMsg=(String)settings.alertCustomMsg
 					if((Boolean)settings.useAlertIntro) customMsg=(String)settings.AlertIntro+', '+(String)settings.alertCustomMsg
 
 					temp="<hr><br>Current poll of Weather API: ${sdf.format(date)}<br/><br/>URI: <a href='${state.wxURI}' target=_blank>${state.wxURI}</a><br><br>AlertMSG Built based on configuration:<br><br>${customMsg}<br><br>"
@@ -326,7 +330,8 @@ def SettingsPage(){
 					temp += "<tr><td>Severity Overrides Restrictions:</td><td>${overrideRestSeverity ? "Enabled for ${settings.modeSeverity}" : "Disabled"}</td></tr>"
 					temp += "<tr><td>Weather Type Overrides Restrictions:</td><td>${overrideRestWeather ? "Enabled for ${settings.WeatherType}" : "Disabled"}</td></tr></table></br>"
 					paragraph temp
-					for(Integer y=0;y<mListofAlertsFLD.size();y++){
+					Integer y
+					for(y=0;y<mListofAlertsFLD.size();y++){
 						String testalertmsg
 						overrideRestSeverity=((Boolean)settings.modeSeverityYes && settings.modeSeverity != null && ((List)settings.modeSeverity).contains(mListofAlertsFLD[y].alertseverity))
 						overrideRestWeather=((Boolean)settings.modeWeatherType && settings.WeatherType != null && settings.WeatherType.contains(mListofAlertsFLD[y].alertevent))
@@ -383,7 +388,8 @@ def main(){
 
 void callRefreshTile(){
 	String t=app.id.toString()
-	def noaaTile=getChildDevice(sNOAA+t)
+	def noaaTile
+	noaaTile=getChildDevice(sNOAA+t)
 	if(!noaaTile) noaaTile= getChildDevice(sNOAA)
 	if(noaaTile) noaaTile.refreshTile()
 }
@@ -400,7 +406,7 @@ void alertNow(Integer y, String alertmsg, Boolean repeatCheck, Map msgMap=null){
 	Boolean overrideRestWeather=(y!=null && (Boolean)settings.modeWeatherType && settings.WeatherType != null && mListofAlertsFLD && settings.WeatherType.contains(mListofAlertsFLD[y]?.alertevent))
 	logDebug "Restrictions on?  Modes: ${restrictionMode}, Switch: ${restrictionSwitch}, Severity Override: ${overrideRestSeverity}, Weather Type Override: ${overrideRestWeather}"
 
-	Boolean alertWmatch=false
+	Boolean alertWmatch; alertWmatch=false
 	if(alertmsg!=sNULL){
 		// no restrictions
 		if((Boolean)settings.UsealertSwitch && settings.alertSwitch && (Boolean)settings.alertSwitchWeatherType && (List)settings.alertSwitchWeatherTypeWatch && mListofAlertsFLD && y!=null &&
@@ -446,10 +452,11 @@ void walertCheck(String alertmsg="a"){
 	if(!ListofAlertsFLD[myId] && (List)state.ListofAlerts) ListofAlertsFLD[myId]=(List)state.ListofAlerts // on hub restart or code reload
 	List<Map> mListofAlertsFLD=ListofAlertsFLD[myId] ?: []
 
-	Boolean alertSwitchReset=false
+	Boolean alertSwitchReset; alertSwitchReset=false
 	if((String)state.alertWeatherMatch){
-		Boolean alertReset=true
-		for(Integer y=0;y<mListofAlertsFLD.size();y++){
+		Boolean alertReset; alertReset=true
+		Integer y
+		for(y=0;y<mListofAlertsFLD.size();y++){
 			if((Boolean)settings.UsealertSwitch && settings.alertSwitch && (Boolean)settings.alertSwitchWeatherType && (List)settings.alertSwitchWeatherTypeWatch && mListofAlertsFLD && y!=null &&
 					((List)settings.alertSwitchWeatherTypeWatch).contains(mListofAlertsFLD[y].alertevent) ) alertReset=false
 		}
@@ -457,7 +464,8 @@ void walertCheck(String alertmsg="a"){
 	}
 	if((alertSwitchReset || alertmsg==sNULL) && (Boolean)settings.UsealertSwitch && settings.alertSwitch && ((Boolean)settings.alertSwitchOff || alertSwitchReset)){
 		if((Boolean)settings.UsealertSwitch && settings.alertSwitch && settings.alertSwitch.currentState(sSW).value==sON){
-			String amsg="turning off switch due to: "
+			String amsg
+			amsg="turning off switch due to: "
 			if(alertSwitchReset) amsg += "weather alert ended"
 			else amsg+= "alerts ended"
 			logInfo amsg
@@ -471,7 +479,7 @@ void walertCheck(String alertmsg="a"){
 }
 
 void repeatNow(Boolean newmsg=false){
-	Boolean doRefresh=true
+	Boolean doRefresh; doRefresh=true
 	if((Boolean)settings.repeatYes && (String)state.repeatmsg && settings.repeatMinutes > 0){
 		if(!newmsg && state.rptCount >= state.rptNum){
 			state.repeat=false
@@ -507,7 +515,7 @@ void repeatNow(Boolean newmsg=false){
 	if(doRefresh) runIn(1,callRefreshTile)
 }
 
-@Field volatile static Map<String,List> ListofAlertsFLD=[:]
+@Field volatile static Map<String,List<Map>> ListofAlertsFLD=[:]
 
 void issueGetAlertMsg(){
 	Map result=getResponseURL(true)
@@ -520,33 +528,34 @@ void getAlertMsgSync(){
 }
 
 void finishAlertMsg(Map result){
-	List<Map> ListofAlerts=[]
-	List<Map> expireList=[]
+	List<Map> ListofAlerts; ListofAlerts=[]
+	List<Map> expireList; expireList=[]
 
 	String myId=app.getId()
-	if(!ListofAlertsFLD[myId] && (List)state.ListofAlerts) ListofAlertsFLD[myId]=(List)state.ListofAlerts // on hub restart or code reload
-	List<Map> mListofAlertsFLD=ListofAlertsFLD[myId] ?: []
+	if(!ListofAlertsFLD[myId] && (List)state.ListofAlerts) ListofAlertsFLD[myId]=(List<Map>)state.ListofAlerts // on hub restart or code reload
+	List<Map> mListofAlertsFLD
+	mListofAlertsFLD=ListofAlertsFLD[myId] ?: []
 
-	Boolean hadAlerts=false
-	if(mListofAlertsFLD.size()>0) hadAlerts=true
+	Boolean hadAlerts= mListofAlertsFLD.size()>0
 
 	if(result){
-		Boolean IsnewList=false
+		Boolean IsnewList; IsnewList=false
 		Date dt1=new Date()
 		String timestamp=dt1.format("yyyy-MM-dd'T'HH:mm:ssXXX")
 //		Date dt1=new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", timestamp)
 
-		for(Integer i=0; i<result.features.size();i++){
-			Map msgMap=null
+		Integer i
+		for(i=0; i<((List)result.features).size();i++){
+			Map msgMap; msgMap=null
 //			debug=true
 //			alertmsg=[]
 			String alertexpires
 
-			Map feat=(Map)((List)result.features)[i]
+			Map<String,Map> feat=(Map<String,Map>)((List)result.features)[i]
 			//alert expiration
 
-			Boolean replacedAt=false
-			Boolean useEnds=false
+			Boolean replacedAt; replacedAt=false
+			Boolean useEnds; useEnds=false
 			if(feat.properties.replacedAt){
 				alertexpires=(String)feat.properties.replacedAt
 				replacedAt=true
@@ -560,7 +569,7 @@ void finishAlertMsg(Map result){
 			if(!t0) msgMap=buildAlertMap(feat)
 			else if(t0.contains((String)feat.properties.event)) msgMap=buildAlertMap(feat)
 
-			Boolean expired=false
+			Boolean expired; expired=false
 			//if alert has expired ignore alert
 			Date dt=new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", alertexpires)
 			if(dt1.getTime() > dt.getTime()){ expired=true}
@@ -568,9 +577,9 @@ void finishAlertMsg(Map result){
 
 			if(msgMap!=null){
 				if(!expired || (Boolean)settings.debug){
-					Boolean isNewNotice=false
+					Boolean isNewNotice; isNewNotice=false
 					if(mListofAlertsFLD.size() > 0){
-						Map fndMsg=(Map)mListofAlertsFLD.find{ ((String)it.alertid).contains((String)msgMap.alertid)}
+						Map fndMsg= mListofAlertsFLD.find{ ((String)it.alertid).contains((String)msgMap.alertid)}
 						if(fndMsg){ msgMap=fndMsg}
 						else isNewNotice=true
 					} else{
@@ -603,10 +612,11 @@ void finishAlertMsg(Map result){
 		} else{ state.remove('ListofAlerts'); state.remove('alertAnnounced')}
 
 		if(mListofAlertsFLD){
-			Boolean fixedRepeat=false
-			Boolean schedTile=false
-			for(Integer y=0;y<mListofAlertsFLD.size();y++){
-				Map msgMap=(Map)mListofAlertsFLD[y]
+			Boolean fixedRepeat; fixedRepeat=false
+			Boolean schedTile; schedTile=false
+			Integer y
+			for(y=0;y<mListofAlertsFLD.size();y++){
+				Map msgMap= mListofAlertsFLD[y]
 				if(msgMap && !(Boolean)msgMap.expired){
 					if(!(Boolean)msgMap.alertAnnounced || !(Boolean)msgMap.alertPushed){
 						Boolean everDid=((Boolean)msgMap.alertAnnounced || (Boolean)msgMap.alertPushed)
@@ -651,7 +661,7 @@ void finishAlertMsg(Map result){
 	}
 }
 
-Map buildAlertMap(Map result){
+Map buildAlertMap(Map<String,Map> result){
 	String alertexpires
 	//build new entry for map
 	if(result.properties.replacedAt)alertexpires=(String)result.properties.replacedAt
@@ -707,7 +717,7 @@ Map buildAlertMap(Map result){
 }
 
 static String alertFormatStates(String imsg){
-	String msg=imsg
+	String msg; msg=imsg
 	if(msg){
 		msg=msg.replaceAll("/AL/", "Alabama")
 		msg=msg.replaceAll("/AK/", "Alaska")
@@ -781,7 +791,7 @@ static String alertRemoveStates(String imsg){
 }
 
 static String alertFormatText(String imsg){
-	String msg=imsg
+	String msg; msg=imsg
 	if(msg){
 		msg=msg.replaceAll(/NWS/, "the National Weather Service of")
 		msg=msg.replaceAll(/(WHAT|WHEN|IMPACTS|IMPACT|WHERE|INCLUDES|HAZARDS|INCLUDE|HAZARD|TEMPERATURE|SOURCE)/, sBLANK)
@@ -797,7 +807,7 @@ static String alertFormatText(String imsg){
 }
 
 static String alertFormatArea(String imsg){
-	String msg=imsg
+	String msg; msg=imsg
 	if(msg){
 		msg.replaceAll(/NWS/, "the National Weather Service of")
 		msg=msg.replaceAll(", ", sBLANK)
@@ -817,7 +827,7 @@ static String alertFormatArea(String imsg){
 //Test Alert Section
 void runtestAlert(){
 	atomicState.testmsg=true
-	Integer endTime=30
+	Integer endTime; endTime=30
 	logInfo "Initiating a test alert."
 	String msg=buildTestAlert()
 	state.repeatmsg=msg
@@ -842,7 +852,7 @@ void endTest(){
 }
 
 String buildTestAlert(){
-	String alertmsg=(String)settings.alertCustomMsg
+	String alertmsg; alertmsg=(String)settings.alertCustomMsg
 	try{ alertmsg=alertmsg.replace("{alertarea}","Springfield County.")}
 	catch (ignored){}
 	try{ alertmsg=alertmsg.replace("{alertseverity}","Severe")}
@@ -865,7 +875,8 @@ String buildTestAlert(){
 }
 
 // Common Notification Routines
-void talkNow(String alertmsg, Boolean repeatCheck){
+void talkNow(String ialertmsg, Boolean repeatCheck){
+	String alertmsg; alertmsg=ialertmsg
 	if(repeatCheck){
 		if((Boolean)settings.useAlertIntro) alertmsg="Repeating previous alert,, ${settings.AlertIntro} "+alertmsg
 		else alertmsg="Repeating previous alert,,"+alertmsg
@@ -874,7 +885,7 @@ void talkNow(String alertmsg, Boolean repeatCheck){
 	if((Boolean)settings.musicmode){
 		List mspks=(List)settings.musicspeaker
 		logDebug "Using audioNotification $mspks"
-		Boolean okT=false
+		Boolean okT; okT=false
 		if(mspks && mspks[0].hasCommand('playTextAndRestore')){
 			try{
 				mspks*.playTextAndRestore(alertmsg.toLowerCase(), settings.speakervolume)
@@ -889,7 +900,7 @@ void talkNow(String alertmsg, Boolean repeatCheck){
 	if((Boolean)settings.echoSpeaks2){
 		List spks=(List)settings.echospeaker
 		logDebug "Using echoSpeaks ${spks}"
-		Boolean supportsSetVolume=false
+		Boolean supportsSetVolume; supportsSetVolume=false
 		List<String> msgs=[]
 		List svVols=[]
 		Boolean canPlay=spks[0].hasCommand('playAnnouncement')
@@ -906,10 +917,10 @@ void talkNow(String alertmsg, Boolean repeatCheck){
 				msgs.push("Setting Echo Speaker to volume level: ${settings.speakervolume}".toString())
 			} catch (e){ logError "unable to set volume", e}
 		}
-		Boolean okT=false
+		Boolean okT; okT=false
 		if(spks && canPlay){
 			try{
-				String tt="serial"
+				String tt; tt="serial"
 				if(alertmsg.size() < 420){
 					if(spks.size() > 1 && spks[0].hasCommand('parallelPlayAnnouncement')){
 						spks*.parallelPlayAnnouncement(alertmsg.toLowerCase(), 'NOAA Weather Alert')
@@ -929,7 +940,7 @@ void talkNow(String alertmsg, Boolean repeatCheck){
 						spks*.setVolume(settings.speakervolRestore)
 						msgs.push("Restoring Speaker to volume level: ${settings.speakervolRestore}".toString())
 					} else{
-						Integer i=0
+						Integer i; i=0
 						spks.each{ dev ->
 							def a=svVols[i]
 							try{
@@ -951,7 +962,7 @@ void talkNow(String alertmsg, Boolean repeatCheck){
 		List spks=(List)settings.speechspeaker
 		List<String> msgs=[]
 		logDebug "Using speechSynthesis $spks, delays: ${settings.speechdelay}"
-		Boolean okT=false
+		Boolean okT; okT=false
 		Boolean canSpeak=spks[0].hasCommand('speak')
 		if(canSpeak && spks && spks[0].hasCommand('initialize')){
 			try{
@@ -964,7 +975,7 @@ void talkNow(String alertmsg, Boolean repeatCheck){
 			if(!okT){ msgs.push("Speech device(s) ${spks} has not been selected or does not support initialize command.".toString())}
 		}
 
-		Boolean supportsSetVolume=false
+		Boolean supportsSetVolume; supportsSetVolume=false
 		List svVols=[]
 		if(canSpeak && settings.speakervolume && spks && spks[0].hasCommand('setVolume')){
 			if(!settings.speakervolRestore){
@@ -988,7 +999,7 @@ void talkNow(String alertmsg, Boolean repeatCheck){
 			okT=false
 			alertmsg=alertmsg.toLowerCase()
 			try{
-				String tt="serial"
+				String tt; tt="serial"
 				if(spks && spks.size() > 1 && spks[0].hasCommand('parallelSpeak') && alertmsg.size() < 420){
 					spks*.parallelSpeak(alertmsg)
 					tt="parallel"
@@ -1006,7 +1017,7 @@ void talkNow(String alertmsg, Boolean repeatCheck){
 						spks*.setVolume(settings.speakervolRestore)
 						msgs.push("Restoring Speech Speaker to volume level: ${settings.speakervolRestore}".toString())
 					} else{
-						Integer i=0
+						Integer i; i=0
 						spks.each{ dev ->
 							def a=svVols[i]
 							try{
@@ -1026,7 +1037,7 @@ void talkNow(String alertmsg, Boolean repeatCheck){
 }
 
 void pushNow(String ialertmsg, Boolean repeatCheck){
-	String alertmsg=ialertmsg
+	String alertmsg; alertmsg=ialertmsg
 	if((Boolean)settings.pushovertts){
 		logInfo "Sending Pushover message."
 		if(repeatCheck){
@@ -1039,10 +1050,11 @@ void pushNow(String ialertmsg, Boolean repeatCheck){
 		String m1=alertmsg.replaceAll(/\s\s+/, " ")
 		List<String> subMsg=m1.tokenize()
 		Integer lsiz=subMsg.size()
-		Integer a=0
-		Integer i=0
+		Integer a,i
+		a=0
+		i=0
 		while (i<lsiz){
-			String nextpart=sBLANK
+			String nextpart; nextpart=sBLANK
 			while (nextpart.size() < 1000 && i < lsiz){
 				nextpart += subMsg[i]+sSPACE
 				i+=1
@@ -1067,7 +1079,8 @@ void pushNow(String ialertmsg, Boolean repeatCheck){
 			fullalert << m.group()
 		}*/
 
-		for(Integer x=0;x<fullalert.size();x++){
+		Integer x
+		for(x=0;x<fullalert.size();x++){
 			if(fullalert.size()>1) ((List)settings.pushoverdevice)*.deviceNotification("(${x+1}/${fullalert.size()}) "+fullalert[x])
 			else ((List)settings.pushoverdevice)*.deviceNotification(fullalert[x])
 			//pauseExecution(1000)
@@ -1076,11 +1089,11 @@ void pushNow(String ialertmsg, Boolean repeatCheck){
 }
 
 
-List getTile(){
+List<Map> getTile(){
 	String myId=app.getId()
 	if(!ListofAlertsFLD[myId] && (List)state.ListofAlerts) ListofAlertsFLD[myId]=(List)state.ListofAlerts // on hub restart or code reload
 	List<Map> mListofAlertsFLD=ListofAlertsFLD[myId]
-	List msg=[]
+	List<Map> msg; msg=[]
 	if(!(Boolean)settings.disableTile){
 		logDebug "Creating data information for tile display."
 		try{
@@ -1088,9 +1101,11 @@ List getTile(){
 				msg << [alertmsg:(String)state.repeatmsg]
 			}else{
 				if(mListofAlertsFLD){
-					for(Integer x=0;x<mListofAlertsFLD.size();x++){
+					Integer x
+					for(x=0;x<mListofAlertsFLD.size();x++){
 						if(msg.toString().length() < 100000){
-							if(!(Boolean)mListofAlertsFLD[x].expired) msg << [alertmsg:mListofAlertsFLD[x].alertmsg]
+							Map m= mListofAlertsFLD[x]
+							if(!(Boolean)m.expired) msg << [alertmsg:m.alertmsg]
 						}
 					}
 				}
@@ -1157,8 +1172,9 @@ Map getResponseURL(Boolean async=false){
 		longitude="${location.longitude}".toString()
 	}
 
-	String wxURI="https://api.weather.gov/alerts?point=${latitude}%2C${longitude}&status=actual&message_type=alert,update".toString()
-	Map result=null
+	String wxURI
+	wxURI="https://api.weather.gov/alerts?point=${latitude}%2C${longitude}&status=actual&message_type=alert,update".toString()
+	Map result; result=null
 
 	// Build out the API options
 	List<String> ulst=checkCap((List<String>)settings.whatAlertUrgency)
@@ -1219,8 +1235,8 @@ List checkCap(List<String> sevlst){
 }
 
 void ahttpreq(resp, Map cbD){
-	Boolean ok=false
-	Map data=null
+	Boolean ok; ok=false
+	Map data; data=null
 	Integer responseCode
 	try{
 		//def t0=resp.getHeaders()
@@ -1230,7 +1246,7 @@ void ahttpreq(resp, Map cbD){
 			if(rdata){
 				//logInfo "http result: data is not a map."
 				try{
-					data= new JsonSlurper().parseText(rdata)
+					data= (Map)new JsonSlurper().parseText(rdata)
 				}catch (ignored){
 					logInfo "http result: parsing json failed."
 					data=resp.data
@@ -1246,7 +1262,7 @@ void ahttpreq(resp, Map cbD){
 
 Map getResponseEvents(){
 	String wxURI="https://api.weather.gov/alerts/types"
-	Map result=null
+	Map result; result=null
 	Map requestParams =	[
 		uri: wxURI,
 		requestContentType: "application/json",
@@ -1319,7 +1335,7 @@ void initialize(){
 	if((Boolean)settings.UsealertSwitch && settings.alertSwitch && settings.alertSwitch.currentState(sSW).value==sON) alertNow(null, sNULL, false) // maybe Switch.off()
 	logWarn "NOAA Weather Alerts application state is reset."
 
-	Integer myPoll=5
+	Integer myPoll; myPoll=5
 	if(settings.whatPoll)myPoll=settings.whatPoll.toInteger()
 	switch(myPoll){
 		case 1:
@@ -1351,7 +1367,7 @@ void initialize(){
 	runIn(1,callRefreshTile)
 	if((Boolean)settings.logDebug || (Boolean)settings.logTrace || (Boolean)settings.logInfo){
 	//if((Boolean)settings.logEnable){
-		Integer myLog=15
+		Integer myLog; myLog=15
 		if(settings.logMinutes!=null)myLog=(Integer)settings.logMinutes
 		if(myLog>0){
 			logTrace "Debug messages set to automatically disable in ${myLog} minute(s)."
