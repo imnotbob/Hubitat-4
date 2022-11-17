@@ -653,8 +653,8 @@ void finishAlertMsg(Map result){
 			if((Boolean)settings.UsealertSwitch && settings.alertSwitch && settings.alertSwitch.currentState(sSW).value==sON) alertNow(null, sNULL, false) // maybe Switch.off()
 			if((Boolean)state.repeat){
 				unschedule(repeatNow)
-				runIn(1,callRefreshTile)
 			}
+			runIn(1,callRefreshTile)
 			state.repeat=false
 			state.repeatmsg=sNULL
 		}
