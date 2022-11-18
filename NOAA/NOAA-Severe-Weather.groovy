@@ -15,7 +15,7 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 11/17/2022
+ * Last Update: 11/18/2022
  */
 //file:noinspection GroovySillyAssignment
 //file:noinspection unused
@@ -438,13 +438,18 @@ void alertNow(Integer y, String alertmsg, Boolean repeatCheck, Map msgMap=null){
 	}
 	walertCheck(alertmsg)
 	if(alertWmatch && (String)state.alertWeatherMatch){
-		Date dt=new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", (String)state.alertWeatherMatch)
+		Date dt=parseDt((String)state.alertWeatherMatch)
 		Long sec=(dt.getTime()-now()) / 1000
 		if(sec > 0L){
 			runIn(sec, "walertCheck")
 			logDebug "Scheduling check in $sec seconds:"
 		}
 	}
+}
+
+static Date parseDt(String s){
+	Date dt=new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", s)
+	return dt
 }
 
 void walertCheck(String alertmsg="a"){
@@ -542,52 +547,70 @@ void finishAlertMsg(Map result){
 		Boolean IsnewList; IsnewList=false
 		Date dt1=new Date()
 		String timestamp=dt1.format("yyyy-MM-dd'T'HH:mm:ssXXX")
-//		Date dt1=new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", timestamp)
 
 		Integer i
 		for(i=0; i<((List)result.features).size();i++){
 			Map msgMap; msgMap=null
 //			debug=true
 //			alertmsg=[]
-			String alertexpires
 
 			Map<String,Map> feat=(Map<String,Map>)((List)result.features)[i]
 			//alert expiration
 
-			Boolean replacedAt; replacedAt=false
-			Boolean useEnds; useEnds=false
-			if(feat.properties.replacedAt){
-				alertexpires=(String)feat.properties.replacedAt
-				replacedAt=true
-			} else if(feat.properties.ends){
-				alertexpires=(String)feat.properties.ends
+			String alertexpires,t
+			Boolean replacedAt, useEnds, expired
+			replacedAt=false
+			useEnds=false
+			expired=false
+			Date enddt; enddt=null
+			t=(String)feat.properties.ends
+			if(t){
+				alertexpires=t
+				enddt=parseDt(t)
 				useEnds=true
-			} else alertexpires=(String)feat.properties.expires
+			}
+			t=(String)feat.properties.replacedAt
+			if(t){
+				Date tdt= parseDt(t)
+				if(enddt){
+					if(tdt.getTime() < enddt.getTime()){ enddt= tdt; alertexpires=t; replacedAt=true; useEnds=false }
+				}else{
+					enddt= tdt; alertexpires=t; replacedAt=true; useEnds=false
+				}
+			}
+			t=(String)feat.properties.expires
+			if(t){
+				Date tdt= parseDt(t)
+				if(enddt){
+					if(tdt.getTime() < enddt.getTime()){ enddt= tdt; alertexpires=t; useEnds=false; replacedAt=false }
+				}else{
+					enddt= tdt; alertexpires=t; useEnds=false; replacedAt=false
+				}
+			}
 
 			//if specific weatheralerts is chosen
 			List<String> t0=(List<String>)settings.myWeatherAlert
 			if(!t0) msgMap=buildAlertMap(feat)
 			else if(t0.contains((String)feat.properties.event)) msgMap=buildAlertMap(feat)
 
-			Boolean expired; expired=false
 			//if alert has expired ignore alert
-			Date dt=new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", alertexpires)
-			if(dt1.getTime() > dt.getTime()){ expired=true}
+			if(dt1.getTime() > enddt.getTime()){ expired=true }
 			logTrace "filtered: ${msgMap==null ? sTRUE : sFALSE} expired: ${expired}  alertexpires ${alertexpires}  replacedAt: $replacedAt useEnds: $useEnds    now: ${timestamp}  ${feat.properties.severity}  ${feat.properties.event}"
 
 			if(msgMap!=null){
-				if(!expired || (Boolean)settings.debug){
+				if(!expired){
 					Boolean isNewNotice; isNewNotice=false
 					if(mListofAlertsFLD.size() > 0){
-						Map fndMsg= mListofAlertsFLD.find{ ((String)it.alertid).contains((String)msgMap.alertid)}
+						Map fndMsg= mListofAlertsFLD.find{ Map it -> ((String)it.alertid).contains((String)msgMap.alertid)}
 						if(fndMsg){ msgMap=fndMsg}
 						else isNewNotice=true
 					} else{
 						isNewNotice=true
 						IsnewList=true
 					}
-					if(isNewNotice) logDebug "Valid ${msgMap.alertid} is new in ListofAlerts: ${IsnewList}"
-					else logDebug "Valid ${msgMap.alertid} exists in ListofAlerts"
+					if((Boolean)settings.debug)
+						if(isNewNotice) logDebug "Valid ${msgMap.alertid} is new in ListofAlerts: ${IsnewList}"
+						else logDebug "Valid ${msgMap.alertid} exists in ListofAlerts"
 
 					if(isNewNotice){ msgMap.alertPushed=false; msgMap.alertAnnounced=false}
 					msgMap.expired=expired
