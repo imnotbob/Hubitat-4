@@ -1231,7 +1231,7 @@ Map getResponseURL(Boolean async=false){
 				}
 			}
 		}
-		catch (e){ logError "The API Weather.gov did not return a response for ${wxURI}.",e}
+		catch (e){ logWarn "The API Weather.gov did not return a response for ${wxURI}.",e}
 		return result
 	} else{
 		try{
@@ -1275,7 +1275,7 @@ void ahttpreq(resp, Map cbD){
 			}
 
 		} else logWarn "The API Weather.gov did not return a successful response $responseCode message ${resp.getErrorMessage()}."
-	} catch(e){ logError "The API Weather.gov did not return a response. (exception)", e}
+	} catch(e){ logWarn "The API Weather.gov did not return a response. (exception)", e}
 	if(ok) finishAlertMsg(data)
 	walertCheck()
 }
@@ -1299,7 +1299,7 @@ Map getResponseEvents(){
 			}
 		}
 	}
-	catch (e){ logError "The API Weather.gov get types did not return a response for ${wxURI}.", e}
+	catch (e){ logWarn "The API Weather.gov get types did not return a response for ${wxURI}.", e}
 	return result
 }
 
