@@ -125,7 +125,7 @@ private Map gtSt(){ return (Map)state }
 
 def mainPage(){
 	Map set= gtSettings()
-	Map st= gtSt()
+	//Map st= gtSt()
 	if(oMs(set,sLOGINFO)==null) app.updateSetting(sLOGINFO, [(sVL):sTRUE, (sTY):sBOOL])
 	if(oMs(set,sLOGWRN)==null) app.updateSetting(sLOGWRN, [(sVL):sTRUE, (sTY):sBOOL])
 	if(oMs(set,sLOGERR)==null) app.updateSetting(sLOGERR, [(sVL):sTRUE, (sTY):sBOOL])
@@ -623,7 +623,7 @@ void repeatNow(Boolean newmsg=false){
 		Integer rptn; rptn= (Integer)state['rptNum']
 		if(!newmsg && rptc >= rptn){
 			state[sRPT]=false
-			state[sRPTMSG]=sNULL; msg=sNULL
+			state[sRPTMSG]=sNULL // ; msg=sNULL
 			logTrace "Finished repeating alerts."
 		}else{
 			if(newmsg){
@@ -840,15 +840,17 @@ Map buildAlertMap(Map<String,Map> result){
 	//build new entry for map
 
 	Map resultProp= result.properties
-	Map res= calculateEnd(resultProp)
-	String alertexpires=sMs(res,'alertexpires')
+
 	//Boolean replacedAt= bIs(res,'replacedAt')
 	//Boolean useEnds= bIs(res,'useEnds')
-	Date enddt; enddt=(Date)res.enddt
+	//Date enddt; enddt=(Date)res.enddt
 
 /*	if(resultProp.replacedAt)alertexpires=(String)resultProp.replacedAt
 	else if(resultProp.ends) alertexpires=(String)resultProp.ends
 	else alertexpires=(String)resultProp.expires */
+	Map res= calculateEnd(resultProp)
+	String alertexpires=sMs(res,'alertexpires')
+
 	String alertarea
 	alertarea=sMs(resultProp,'areaDesc')
 	alertarea=alertRemoveStates(alertarea)
@@ -1541,19 +1543,19 @@ void installCheck(){
 @SuppressWarnings('GroovyFallthrough')
 void initialize(){
 	buildEventsListFrc()
-	checkState()
-	unschedule()
-	createChildDevices()
 	state[sRPT]=false
-	state[sRPTMSG]=sNULL
+	unschedule()
+	checkState()
 	String myId=app.getId()
 	ListofAlertsFLD[myId]=[]
 	ListofAlertsFLD=ListofAlertsFLD
 	state[sLISTOFALRTS]=[]
+	createChildDevices()
 	Map set= gtSettings()
 	def dev=set[sALRTSW]
 	Boolean usealsw= bIs(set,sUSEALRTSW) && dev
 	if(usealsw && dev.currentState(sSW).value==sON) alertNow(null, sNULL, false) // maybe Switch.off()
+
 	logWarn "NOAA Weather Alerts application state is reset."
 
 	Integer myPoll; myPoll=5
@@ -1585,7 +1587,7 @@ void initialize(){
 
 	main()
 
-	runIn(1,callRefreshTile)
+	runIn(2,callRefreshTile)
 	if(bIs(set,sLOGDEBUG) || bIs(set,sLOGTRC) || bIs(set,sLOGINFO)){
 	//if(bIs(set,'logEnable')){
 		Integer myLog; myLog=15
