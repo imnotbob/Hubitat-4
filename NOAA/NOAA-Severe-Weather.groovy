@@ -15,7 +15,7 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 11/22/2022
+ * Last Update: 12/12/2022
  */
 //file:noinspection GroovySillyAssignment
 //file:noinspection unused
@@ -120,8 +120,8 @@ private static String sMs(Map m,String v){ (String)m[v] }
 @CompileStatic
 private static oMs(Map m,String v){ m[v] }
 
-private Map gtSettings() { return (Map)settings }
-private Map gtSt() { return (Map)state }
+private Map gtSettings(){ return (Map)settings }
+private Map gtSt(){ return (Map)state }
 
 def mainPage(){
 	Map set= gtSettings()
@@ -144,7 +144,7 @@ def mainPage(){
 
 				typ = oMs(set,'whatAlertSeverity') || oMs(set,sWHATPOLL) || sMs(set,'alertCustomMsg') ? 1:0
 				tit= "${UIsupport(typ ? s : s1)} Weather Alert Settings"
-				href((sNM): 'ConfigPage', (sTIT): tit, (sREQ): false, page: 'ConfigPage', (sDESC): 'Change default settings for weather alerts to monitor')
+				href((sNM): 'ConfigPage', (sTIT): tit, (sREQ): false, page: 'ConfigPage', (sDESC): 'Change default settings for weather alerts to monitor, or add custom location')
 
 				typ= (List)settings['myWeatherAlert'] || (List)settings['whatAlertUrgency'] || (List)settings['whatAlertCertainty'] ? 1:0
 				tit= (typ ? "${UIsupport(s)} " : sBLANK) + "Advanced Alert Settings"
@@ -408,12 +408,18 @@ def SettingsPage(){
 				if(mListofAlertsFLD){
 					def rdev= settings['restrictbySwitch']
 					Boolean restrictionSwitch=(bIs(set,sSWITCHYES) && rdev!=null && rdev.currentState(sSW).value==sON)
+
 					List<String> modes= (List<String>)settings['modes']
 					Boolean restrictionMode=(bIs(set,sMODESYES) && modes!=null && modes.contains(location.mode))
+
 					Boolean overrideRestSeverity
-					overrideRestSeverity=(bIs(set,sMODESEVYES) && settings['modeSeverity'] != null)
+					List<String> modeSeverity= (List<String>)settings['modeSeverity']
+					overrideRestSeverity=(bIs(set,sMODESEVYES) && modeSeverity != null)
+
 					Boolean overrideRestWeather
-					overrideRestWeather=(bIs(set,'modeWeatherType') && settings['WeatherType'] != null)
+					List<String> WeatherType=(List<String>)settings['WeatherType']
+					overrideRestWeather=(bIs(set,'modeWeatherType') && WeatherType != null)
+
 					//Boolean alertSwitchReset=((Boolean)settings.alertSwitchWeatherType && (List)settings.alertSwitchWeatherTypeWatch && ((List)settings.alertSwitchWeatherTypeWatch).contains(mListofAlertsFLD[0].alertevent))
 					//def testresult=(!(result || result2) || result3 || result4) ? true : false
 					Date date=new Date()
@@ -427,15 +433,15 @@ def SettingsPage(){
 					temp += "<table border=0><tr colspan=2><td>Current Restriction Settings:</td></tr>"
 					temp += "<tr><td>Switch:</td><td>${restrictionSwitch ? "Active for ${rdev}" : "Inactive"}</td></tr>"
 					temp += "<tr><td>Mode:</td><td>${restrictionMode ? "Active for ${modes}" : "Inactive"}</td></tr>"
-					temp += "<tr><td>Severity Overrides Restrictions:</td><td>${overrideRestSeverity ? "Enabled for ${settings['modeSeverity']}" : "Disabled"}</td></tr>"
-					temp += "<tr><td>Weather Type Overrides Restrictions:</td><td>${overrideRestWeather ? "Enabled for ${settings['WeatherType']}" : "Disabled"}</td></tr></table></br>"
+					temp += "<tr><td>Severity Overrides Restrictions:</td><td>${overrideRestSeverity ? "Enabled for ${modeSeverity}" : "Disabled"}</td></tr>"
+					temp += "<tr><td>Weather Type Overrides Restrictions:</td><td>${overrideRestWeather ? "Enabled for ${WeatherType}" : "Disabled"}</td></tr></table></br>"
 					paragraph temp
 					Integer y
 					for(y=0;y<mListofAlertsFLD.size();y++){
 						String testalertmsg
 						Map item= mListofAlertsFLD[y]
-						overrideRestSeverity=(bIs(set,sMODESEVYES) && settings['modeSeverity'] != null && ((List<String>)settings['modeSeverity']).contains(sMs(item,'alertseverity')))
-						overrideRestWeather=(bIs(set,'modeWeatherType') && settings['WeatherType'] != null && ((List<String>)settings['WeatherType']).contains(sMs(item,'alertevent')))
+						overrideRestSeverity=(bIs(set,sMODESEVYES) && modeSeverity != null && modeSeverity.contains(sMs(item,'alertseverity')))
+						overrideRestWeather=(bIs(set,'modeWeatherType') && WeatherType != null && WeatherType.contains(sMs(item,'alertevent')))
 						Boolean potts= bIs(set,sPSHTTS)
 						if(!restrictionSwitch && !restrictionMode && !overrideRestSeverity && !overrideRestWeather){
 							if(potts) testalertmsg="alert would be announced on TTS and PushOver device(s)."
@@ -496,7 +502,11 @@ void callRefreshTile(){
 
 List<Map> initListofAlerts(){
 	String myId=app.getId()
-	if(!ListofAlertsFLD[myId] && (List)state[sLISTOFALRTS]) ListofAlertsFLD[myId]=(List<Map>)state[sLISTOFALRTS] // on hub restart or code reload
+	List<Map> sla=(List<Map>)state[sLISTOFALRTS]
+	if(!ListofAlertsFLD[myId] && sla){
+		ListofAlertsFLD[myId]=sla
+		ListofAlertsFLD=ListofAlertsFLD
+	} // on hub restart or code reload
 	return ListofAlertsFLD[myId] ?: []
 }
 
@@ -508,10 +518,16 @@ void alertNow(Integer y, String alertmsg, Boolean repeatCheck, Map msgMap=null){
 	// check restrictions based on Modes and Switches
 	def rdev= settings['restrictbySwitch']
 	Boolean restrictionSwitch=(bIs(set,sSWITCHYES) && rdev!=null && rdev.currentState(sSW).value==sON)
+
 	List<String> modes= (List<String>)settings['modes']
 	Boolean restrictionMode=(bIs(set,sMODESYES) && modes!=null && modes.contains(location.mode))
-	Boolean overrideRestSeverity=(item && bIs(set,sMODESEVYES) && settings['modeSeverity'] != null && ((List<String>)settings['modeSeverity']).contains(sMs(item,'alertseverity')))
-	Boolean overrideRestWeather=(item && bIs(set,'modeWeatherType') && settings['WeatherType'] != null && ((List<String>)settings['WeatherType']).contains(sMs(item,'alertevent')))
+
+	List<String> modeSeverity= (List<String>)settings['modeSeverity']
+	Boolean overrideRestSeverity=(item && bIs(set,sMODESEVYES) && modeSeverity != null && modeSeverity.contains(sMs(item,'alertseverity')))
+
+	List<String> WeatherType=(List<String>)settings['WeatherType']
+	Boolean overrideRestWeather=(item && bIs(set,'modeWeatherType') && WeatherType != null && WeatherType.contains(sMs(item,'alertevent')))
+
 	logDebug "Restrictions on?  Modes: ${restrictionMode}, Switch: ${restrictionSwitch}, Severity Override: ${overrideRestSeverity}, Weather Type Override: ${overrideRestWeather}"
 
 	Boolean alertWmatch; alertWmatch=false
@@ -519,8 +535,9 @@ void alertNow(Integer y, String alertmsg, Boolean repeatCheck, Map msgMap=null){
 		// no restrictions
 		def dev=set[sALRTSW]
 		Boolean usealsw= bIs(set,sUSEALRTSW) && dev
-		if(usealsw && bIs(set,'alertSwitchWeatherType') && item && (List)settings['alertSwitchWeatherTypeWatch'] &&
-				((List<String>)settings['alertSwitchWeatherTypeWatch']).contains(sMs(item,'alertevent')) ) alertWmatch=true
+		List<String> alertSwitchWeatherTypeWatch= (List<String>)settings['alertSwitchWeatherTypeWatch']
+		if(usealsw && bIs(set,'alertSwitchWeatherType') && item && alertSwitchWeatherTypeWatch &&
+				alertSwitchWeatherTypeWatch.contains(sMs(item,'alertevent')) ) alertWmatch=true
 
 		Boolean override= (overrideRestSeverity || overrideRestWeather)
 		Boolean needPush= !msgMap || (msgMap && !bIs(msgMap,'alertPushed'))
@@ -565,7 +582,7 @@ void walertCheck(String alertmsg="a"){
 	Boolean alertSwitchReset; alertSwitchReset=false
 	def dev=set[sALRTSW]
 	Boolean usealsw= bIs(set,sUSEALRTSW) && dev
-	List<String> weaTypWat= (List)settings['alertSwitchWeatherTypeWatch']
+	List<String> weaTypWat= (List<String>)settings['alertSwitchWeatherTypeWatch']
 	Boolean alswWeatTyp= bIs(set,'alertSwitchWeatherType') && weaTypWat && mListofAlertsFLD
 	if(sMs(gtSt(),'alertWeatherMatch')){
 		Boolean alertReset; alertReset=true
@@ -734,7 +751,7 @@ void finishAlertMsg(Map result){
 				if(!expired || useexpired){
 					Boolean isNewNotice; isNewNotice=false
 					if(mListofAlertsFLD.size() > 0){
-						Map fndMsg= mListofAlertsFLD.find{ Map it -> sMs(it,alertid).contains(sMs(msgMap,alertid)) }
+						Map fndMsg= mListofAlertsFLD.find{ Map it -> sMs(it,alertid)?.contains(sMs(msgMap,alertid)) }
 						if(fndMsg){ msgMap=fndMsg}
 						else isNewNotice=true
 					} else{
@@ -780,8 +797,6 @@ void finishAlertMsg(Map result){
 					if(!bIs(msgMap,'alertAnnounced') || !bIs(msgMap,'alertPushed')){
 						Boolean everDid= bIs(msgMap,'alertAnnounced') || bIs(msgMap,'alertPushed')
 						alertNow(y, almsg, false, msgMap)
-						//msgMap['alertPushed']=true
-						//msgMap['alertAnnounced']=true
 						mListofAlertsFLD[y]=msgMap
 						ListofAlertsFLD[myId]=mListofAlertsFLD
 						ListofAlertsFLD=ListofAlertsFLD
@@ -821,7 +836,6 @@ void finishAlertMsg(Map result){
 	}
 }
 
-@CompileStatic
 Map buildAlertMap(Map<String,Map> result){
 	//build new entry for map
 
