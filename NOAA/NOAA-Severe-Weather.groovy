@@ -15,7 +15,7 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 12/12/2022
+ * Last Update: 9/28/2024
  */
 //file:noinspection GroovySillyAssignment
 //file:noinspection unused
@@ -33,7 +33,7 @@ import java.text.SimpleDateFormat
 //import java.util.Date
 //import groovy.time.*
 
-@Field static final String appVersionFLD ='4.0.020'
+@Field static final String appVersionFLD ='4.0.021'
 @Field static final String sNULL         =(String)null
 @Field static final String sBLANK        =''
 @Field static final String sSPACE        =' '
@@ -1171,8 +1171,8 @@ void talkNow(String ialertmsg, Boolean repeatCheck){
 		Boolean addDel=bIs(set,'speechdelay')
 		logDebug "Using speechSynthesis $spks, add delays: ${addDel}"
 		Boolean okT; okT=false
-		Boolean canSpeak=spks[0].hasCommand('speak')
-		if(canSpeak && spks && spks[0].hasCommand('initialize')){
+		Boolean canSpeak= spks && spks[0].hasCommand('speak')
+		if(canSpeak && spks[0].hasCommand('initialize')){
 			try{
 				spks*.initialize()
 				msgs.push("Initializing Speech Speaker")
