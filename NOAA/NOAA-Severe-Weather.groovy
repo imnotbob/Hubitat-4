@@ -15,7 +15,7 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  *
- * Last Update: 9/28/2024
+ * Last Update: 5/19/2026
  */
 //file:noinspection GroovySillyAssignment
 //file:noinspection unused
@@ -33,7 +33,7 @@ import java.text.SimpleDateFormat
 //import java.util.Date
 //import groovy.time.*
 
-@Field static final String appVersionFLD ='4.0.021'
+@Field static final String appVersionFLD ='4.0.022'
 @Field static final String sNULL         =(String)null
 @Field static final String sBLANK        =''
 @Field static final String sSPACE        =' '
@@ -594,7 +594,7 @@ void walertCheck(String alertmsg="a"){
 		}
 		if(alertReset){ state['alertWeatherMatch']=sNULL; alertSwitchReset=true }
 	}
-	if((alertSwitchReset || alertmsg==sNULL) && usealsw && (bIs(set,'alertSwitchOff ') || alertSwitchReset)){
+	if((alertSwitchReset || alertmsg==sNULL) && usealsw && (bIs(set,'alertSwitchOff') || alertSwitchReset)){
 		if(dev.currentState(sSW).value==sON){
 			String amsg
 			amsg="turning off switch due to: "
