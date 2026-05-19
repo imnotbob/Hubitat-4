@@ -2,10 +2,10 @@
    "packageName": "NOAA Weather Alerts (Latest)",
    "minimumHEVersion": "2.1.9",
    "author": "Aaron Ward",
-   "dateReleased": "2024-09-28",
-   "version": "4.0.021",
+   "dateReleased": "2026-05-19",
+   "version": "4.0.022",
    "licenseFile": "",
-   "releaseNotes": "More cleanups, improved handling of replacedAt for alerts",
+   "releaseNotes": "Fix for alert off issue",
    "documentationLink": "https://github.com/imnotbob/Hubitat-4/blob/master/NOAA/README.md",
    "communityLink": "https://community.hubitat.com/t/release-noaa-weather-alerts/50588",
    "apps" : [
